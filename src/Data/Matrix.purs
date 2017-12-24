@@ -14,6 +14,7 @@ import Partial.Unsafe (unsafePartial)
 
 
 -- stored as Vec of rows
+-- | Matrix with height `h`, width `w` and contained value `a`
 newtype Matrix h w a = Matrix (Vec.Vec h (Vec.Vec w a))
 
 empty :: ∀a. Matrix D0 D0 a

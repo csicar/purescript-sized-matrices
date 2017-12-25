@@ -2,16 +2,15 @@ module Data.Matrix where
 
 import Prelude
 
-import Data.Array (range)
 import Data.Array as Array
+import Data.Maybe (fromJust)
 import Data.String (joinWith)
-import Data.Tuple.Nested (type (/\), (/\))
 import Data.Typelevel.Num (class Lt, class Pos, D3)
 import Data.Typelevel.Num.Ops (class Add, class Succ)
 import Data.Typelevel.Num.Reps (D0, D1, D2)
 import Data.Typelevel.Num.Sets (class Nat, toInt)
 import Data.Typelevel.Undefined (undefined)
-import Data.Vec (Vec, range')
+import Data.Vec (Vec, index')
 import Data.Vec as Vec
 import Debug.Trace (spy)
 import Partial.Unsafe (unsafePartial)
@@ -20,6 +19,9 @@ import Partial.Unsafe (unsafePartial)
 -- stored as Vec of rows
 -- | Matrix with height `h`, width `w` and contained value `a`
 newtype Matrix h w a = Matrix (Vec.Vec h (Vec.Vec w a))
+
+unsafeVecIndex ∷ ∀s a. Nat s => Vec s a → Int → a
+unsafeVecIndex v i = unsafePartial $ fromJust $ index' v i
 
 empty :: ∀a. Matrix D0 D0 a
 empty = Matrix Vec.empty
@@ -48,8 +50,6 @@ concatV (Matrix a) (Matrix b) = Matrix $ Vec.concat a b
 concatH :: forall h w1 w2 w a. Add w1 w2 w => Nat h => Matrix h w1 a → Matrix h w2 a → Matrix h w a
 concatH (Matrix a) (Matrix b) = Matrix $ Vec.zipWithE (Vec.concat) a b
 
-concat = concatV
-
 singleton :: ∀a. a → Matrix D1 D1 a
 singleton x = Vec.singleton x ⤓ Vec.empty ⇥ empty
 
@@ -71,7 +71,7 @@ fill :: ∀h w ih iw a. Nat h => Nat w =>  (Int → Int → a) → Matrix h w a
 fill f = Matrix $ Vec.fill (\y → Vec.fill (\x → f x y))
 
 unsafeIndex ∷ ∀h w a. Nat h => Nat w => Matrix h w a → Int → Int → a
-unsafeIndex (Matrix m) x y = (m `Vec.unsafeIndex` y) `Vec.unsafeIndex` x
+unsafeIndex (Matrix m) x y = (m `unsafeVecIndex` y) `unsafeVecIndex` x
 
 
 replicate' :: ∀w h a. Nat w => Nat h => a → Matrix h w a
@@ -110,7 +110,7 @@ columnVecUnsafe :: ∀h w a. Nat h => Nat w => Matrix h w a → Int → Vec.Vec 
 columnVecUnsafe (Matrix m) i = map (\row → unsafePartial $ Array.unsafeIndex (Vec.toArray row) i) m
 
 mul :: ∀s a. Nat s => CommutativeRing a => Matrix s s a → Matrix s s a → Matrix s s a
-mul a b = fill (\x y → rowVecUnsafe a y `Vec.scalarMul` columnVecUnsafe b x)
+mul a b = fill (\x y → rowVecUnsafe a y `Vec.dotProduct` columnVecUnsafe b x)
 
 transpose ∷ ∀a h w. Nat h => Nat w =>  Matrix h w a → Matrix w h a
 transpose m = fill (\x y → unsafeIndex m y x)
@@ -172,11 +172,6 @@ instance semiringMatrix :: (Nat s, CommutativeRing a) => Semiring (Matrix s s a)
 
 instance ringMatrix :: (Nat s, CommutativeRing a) => Ring (Matrix s s a) where
   sub a b = add a (negate b)
-
-m = matrix2d 1 2 3 4
-
-mm = m `concatH` (matrix2d 5 6 7 8)
-n = m `concatV` (matrix2d 5 6 7 8)
 
 a :: Matrix D3 D3 Number
 a = matrix3d 

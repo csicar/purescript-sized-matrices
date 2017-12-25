@@ -20,6 +20,12 @@ import Partial.Unsafe (unsafePartial)
 -- | Matrix with height `h`, width `w` and contained value `a`
 newtype Matrix h w a = Matrix (Vec.Vec h (Vec.Vec w a))
 
+height ∷ ∀h w a. Nat h => Nat w => Matrix h w a → Int 
+height _ = toInt (undefined ∷ h)
+
+width ∷ ∀h w a. Nat h => Nat w => Matrix h w a → Int 
+width _ = toInt (undefined ∷ w)
+
 unsafeVecIndex ∷ ∀s a. Nat s => Vec s a → Int → a
 unsafeVecIndex v i = unsafePartial $ fromJust $ index' v i
 

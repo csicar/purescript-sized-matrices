@@ -11,7 +11,7 @@ import Test.Unit.Assert (equal)
 import Test.Unit.Console (TESTOUTPUT)
 import Test.Unit.Main (runTest)
 
-main :: forall t1.                    
+main ::                  
   Eff                         
     ( console :: CONSOLE      
     , testOutput :: TESTOUTPUT

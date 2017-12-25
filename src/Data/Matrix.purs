@@ -2,14 +2,18 @@ module Data.Matrix where
 
 import Prelude
 
+import Data.Array (range)
 import Data.Array as Array
 import Data.String (joinWith)
-import Data.Typelevel.Num (class Lt)
+import Data.Tuple.Nested (type (/\), (/\))
+import Data.Typelevel.Num (class Lt, class Pos, D3)
 import Data.Typelevel.Num.Ops (class Add, class Succ)
 import Data.Typelevel.Num.Reps (D0, D1, D2)
 import Data.Typelevel.Num.Sets (class Nat, toInt)
 import Data.Typelevel.Undefined (undefined)
+import Data.Vec (Vec, range')
 import Data.Vec as Vec
+import Debug.Trace (spy)
 import Partial.Unsafe (unsafePartial)
 
 
@@ -54,6 +58,14 @@ matrix2d x11 x12 x21 x22 =
   Vec.vec2 x11 x12
   ⤓
   Vec.singleton x21 ⇥ (singleton x22)
+
+matrix3d ∷ ∀a. a → a → a → a → a → a → a → a → a → Matrix D3 D3 a
+matrix3d x11 x12 x13 x21 x22 x23 x31 x32 x33 =
+    Vec.vec3 x11 x12 x13
+    ⤓
+    Vec.vec3 x21 x22 x23
+    ⤓
+    Vec.singleton x31 ⇥ Vec.singleton x32 ⇥ (singleton x33)
 
 fill :: ∀h w ih iw a. Nat h => Nat w =>  (Int → Int → a) → Matrix h w a
 fill f = Matrix $ Vec.fill (\y → Vec.fill (\x → f x y))
@@ -113,14 +125,44 @@ deleteColumn ∷ ∀h w w' i a. Nat w => Nat h => Nat w' => Nat i => Succ w' w =
 deleteColumn it m = fill (\ x y → unsafeIndex m (if x < i then x else x+1) y)
   where i = toInt (undefined :: i)
 
--- det ∷ ∀h h' w a. CommutativeRing a => Pos h' => Succ h' h => Pos h => Pos w => Matrix h w a → a
--- det m | toInt (undefined :: h) == 1 = unsafeIndex m 0 0
--- det m = det recM
---   where
---     topRow = rowVecUnsafe m 0 -- assumes matrix has at least one row
---     m' = (deleteRowUnsafe 0 m) :: Matrix h' w a -- assumes matrix has at least one row
---     recM = foldr adds zero $
---       Vec.zipWithE (\i a → (replicate' a) * (deleteColumn i m')) Vec.count' topRow
+usePivot ∷ ∀h w a. Pos w => Pos h => EuclideanRing a => Int → Matrix h w a → Matrix h w a
+usePivot row m = fill f
+    where
+      f :: Int → Int → a
+      f x y 
+        | x == row && y > row = zero - chooseFactor x y
+        | y > row && x > row = (unsafeIndex m x row) * (chooseFactor x y) + unsafeIndex m x y
+        | otherwise = unsafeIndex m x y
+
+      pivot :: a
+      pivot = unsafeIndex m row row
+
+      chooseFactor :: Int → Int → a
+      chooseFactor x y = zero - (unsafeIndex m row y) / pivot
+
+
+lrSingle ∷ ∀h w a. EuclideanRing a => Pos w => Pos h => Matrix h w a → Matrix h w a
+lrSingle m = f 0 m
+    where
+        f row m 
+            | row == toInt (undefined :: h) = m
+            | otherwise = f (row+1) (usePivot row m)
+
+-- | given a invertable matrix `A` with non-zero-able diagonal returns a tuple of L and R with the property:
+-- | `A = L*R`
+lrSplit ∷ ∀h w a. EuclideanRing a => Pos w => Pos h => Matrix h w a → { l:: Matrix h w a, r:: Matrix h w a}
+lrSplit m = {r : fill rConstr, l: fill lConstr}
+    where 
+        lr = lrSingle m
+        rConstr x y
+            | x >= y = unsafeIndex lr x y
+            | otherwise = zero
+        lConstr x y 
+            | x < y = unsafeIndex lr x y
+            | x == y = one
+            | otherwise = zero
+
+ 
 
 instance semiringMatrix :: (Nat s, CommutativeRing a) => Semiring (Matrix s s a) where
   add = add
@@ -135,3 +177,15 @@ m = matrix2d 1 2 3 4
 
 mm = m `concatH` (matrix2d 5 6 7 8)
 n = m `concatV` (matrix2d 5 6 7 8)
+
+a :: Matrix D3 D3 Number
+a = matrix3d 
+    1.0 4.0 (0.0 - 1.0)
+    3.0 0.0 5.0
+    2.0 2.0 1.0
+
+a2 :: Matrix D3 D3 Number
+a2 = matrix3d
+    1.0 4.0 (0.0-1.0)
+    3.0 (0.0-12.0) 8.0
+    2.0 (0.0-6.0) 3.0

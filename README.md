@@ -25,7 +25,23 @@ Sized-Matrices
 > transpose m1
   [7,15]
   [10,22]
-
+> concatH m1 (transpose m1)
+  [7,10,7,15]
+  [15,22,10,22]
+> fill (\x y -> x + y) :: Matrix D3 D3 Int
+  [0,1,2]
+  [1,2,3]
+  [2,3,4]
+> lrSplit $ matrix3d 1.0 4.0 (0.0 - 1.0) 3.0 0.0 5.0 2.0 2.0 1.0
+  { l:
+      [1.0,0.0,0.0]
+      [3.0,1.0,0.0]
+      [2.0,0.5,1.0]
+  , r:
+      [1.0,4.0,-1.0]
+      [0.0,-12.0,8.0]
+      [0.0,0.0,-1.0]
+  }
 ```
 
 Features
@@ -36,3 +52,4 @@ Features
 - Mmtrix multiplication
 - transpose
 - matrix addition
+- LR splitting for solving linear equasion systems

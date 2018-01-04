@@ -2,12 +2,12 @@ module Test.Main where
 
 import Prelude
 
-import Control.Monad.Aff.Console (log)
+-- import Control.Monad.Aff.Console (log)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.AVar (AVAR)
 import Control.Monad.Eff.Console (CONSOLE)
 import Data.Int (pow)
-import Data.Matrix (columnVec, fill, height, lrSingle, matrix2d, matrix3d, negate, replicate', rowVec, transpose, unsafeIndex, width, zipWithE, (⇥), (⤓))
+import Data.Matrix (columnVec, mkPermutation, resize, fill, height, matrix22, matrix33, replicate', rowVec, transpose, unsafeIndex, width, zipWithE, (⇥), (⤓))
 import Data.Typelevel.Num (d0, d1)
 import Data.Vec (vec2)
 import Test.Unit (suite, test)
@@ -17,19 +17,23 @@ import Test.Unit.Main (runTest)
 
 main ::                  
   Eff                         
-    ( console :: CONSOLE      
+    ( console :: CONSOLE
     , testOutput :: TESTOUTPUT
     , avar :: AVAR          
     )                         
     Unit
 main = runTest do
   suite "Data.Matrix" do
+    let
+      p = matrix33 0 0 0 1 0 0 0 1 0
+    test "mkPermutation" do
+      equal p (mkPermutation (_ + 1))
     let 
-      m = matrix2d 1 2 3 4
-      a = matrix3d 1.0 4.0 (0.0 - 1.0) 3.0 0.0 5.0 2.0 2.0 1.0
+      a = matrix33 1.0 4.0 (0.0 - 1.0) 3.0 0.0 5.0 2.0 2.0 1.0
+      b = matrix22 1 2 3 4
     test "consRowVec" do
       let
-        m2 = vec2 7 8 ⤓ m
+        m2 = vec2 7 8 ⤓ b
       equal 3 $ height m2
       equal 2 $ width m2
 
@@ -42,7 +46,7 @@ main = runTest do
 
     test "consColVec" do
       let
-        m2 = vec2 7 8 ⇥ m
+        m2 = vec2 7 8 ⇥ b
       equal 2 $ height m2
       equal 3 $ width m2
 
@@ -56,44 +60,44 @@ main = runTest do
     test "fill" do
       let
         m = fill (\x y → (1+x)*(1+y))
-        m' = matrix3d 1 2 3 2 4 6 3 6 9
+        m' = matrix33 1 2 3 2 4 6 3 6 9
       equal m m'
 
     test "replicate'" do
       let
         m = replicate' "hi"
-        m' = matrix2d "hi" "hi" "hi" "hi"
+        m' = matrix22 "hi" "hi" "hi" "hi"
       equal m' m
 
     test "zipWithE" do
       let 
-        m = matrix2d "hi" "hello" "foo" "bar"
-        n = matrix2d "there" "asd" "bsd" "asd"
-        u = matrix2d "hithere" "helloasd" "foobsd" "barasd"
+        m = matrix22 "hi" "hello" "foo" "bar"
+        n = matrix22 "there" "asd" "bsd" "asd"
+        u = matrix22 "hithere" "helloasd" "foobsd" "barasd"
       equal u $ zipWithE (<>) m n
 
     test "map" do
       let 
-        m = matrix2d 1 2 3 4
-        n = matrix2d 1 4 9 16
+        m = matrix22 1 2 3 4
+        n = matrix22 1 4 9 16
       equal n $ map (_ `pow` 2) m
     
     test "add" do
       let 
-        m = matrix2d 1 2 3 4
-        n = matrix2d 5 6 7 8
-        r = matrix2d 6 8 10 12
+        m = matrix22 1 2 3 4
+        n = matrix22 5 6 7 8
+        r = matrix22 6 8 10 12
       equal r $ m + n
     
     test "negate" do
       let 
-        m = matrix2d 1 2 3 4
-        r = matrix2d (0-1) (0-2) (0-3) (0-4)
+        m = matrix22 1 2 3 4
+        r = matrix22 (0-1) (0-2) (0-3) (0-4)
       equal m $ negate r
     
     test "columnVec" do
       let
-        m = matrix2d 5 3 0 6
+        m = matrix22 5 3 0 6
         r = vec2 5 0
         r' = vec2 3 6
       equal r $ columnVec m d0
@@ -101,7 +105,7 @@ main = runTest do
     
     test "rowVec" do
       let
-        m = matrix2d 5 3 0 6
+        m = matrix22 5 3 0 6
         r = vec2 5 3
         r' = vec2 0 6
       equal r $ rowVec m d0
@@ -109,10 +113,10 @@ main = runTest do
     
     test "mul" do
       let
-        m = matrix3d 1 2 3 4 5 6 7 8 9
-        n = matrix3d 1 0 0 2 3 0 3 0 0
-        r = matrix3d 14 6 0 32 15 0 50 24 0
-        r' = matrix3d 1 2 3 14 19 24 3 6 9
+        m = matrix33 1 2 3 4 5 6 7 8 9
+        n = matrix33 1 0 0 2 3 0 3 0 0
+        r = matrix33 14 6 0 32 15 0 50 24 0
+        r' = matrix33 1 2 3 14 19 24 3 6 9
       equal m $ one * m
       equal n $ one * n
       equal zero $ zero * m
@@ -122,11 +126,11 @@ main = runTest do
     
     test "transpose" do
       let
-        m = matrix2d 1 2 3 4
-        m' = matrix2d 1 3 2 4
+        m = matrix22 1 2 3 4
+        m' = matrix22 1 3 2 4
       equal m' $ transpose m
-
-    test "lr" do
-      let
-        lr_a = matrix3d 1.0 4.0 (0.0-1.0) 3.0 (0.0-12.0) 8.0 2.0 0.5 (0.0-1.0)
-      equal lr_a $ lrSingle a
+    test "resize" do
+      let 
+        sa = resize a
+        sa' = matrix22 1.0 4.0 3.0 0.0
+      equal sa' sa

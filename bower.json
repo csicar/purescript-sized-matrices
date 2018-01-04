@@ -16,11 +16,12 @@
     "purescript-console": "^3.0.0",
     "purescript-sized-vectors": "git://github.com/csicar/purescript-sized-vectors#additional-functions",
     "purescript-strings": "^3.3.2",
-    "purescript-prettier-printer": "^1.1.0"
+    "purescript-rationals": "^4.0.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0",
     "purescript-debug": "^3.0.0",
-    "purescript-test-unit": "^13.0.0"
+    "purescript-test-unit": "^13.0.0",
+    "purescript-quickcheck": "^4.6.1"
   }
 }

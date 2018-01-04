@@ -2,22 +2,32 @@ module Test.Main where
 
 import Prelude
 
--- import Control.Monad.Aff.Console (log)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.AVar (AVAR)
 import Control.Monad.Eff.Console (CONSOLE)
+import Control.Monad.Eff.Random (RANDOM)
 import Data.Int (pow)
-import Data.Matrix (columnVec, mkPermutation, resize, fill, height, matrix22, matrix33, replicate', rowVec, transpose, unsafeIndex, width, zipWithE, (⇥), (⤓))
-import Data.Typelevel.Num (d0, d1)
+import Data.Matrix (Matrix(..), a2, a3, columnVec, fill, height, lrSplit, matrix22, matrix33, mkPermutation, replicate', resize, rowVec, transpose, unsafeIndex, width, zipWithE, (⇥), (⤓))
+import Data.Rational (Rational)
+import Data.Typelevel.Num (D3, d0, d1)
 import Data.Vec (vec2)
+import Test.QuickCheck (Result, (===))
 import Test.Unit (suite, test)
 import Test.Unit.Assert (equal)
 import Test.Unit.Console (TESTOUTPUT)
 import Test.Unit.Main (runTest)
+import Test.Unit.QuickCheck (quickCheck)
+
+identityProp ∷ Matrix D3 D3 Rational → Result
+identityProp m = let 
+  {l, r, p} = lrSplit m
+  in
+    l*r === p*m
 
 main ::                  
   Eff                         
     ( console :: CONSOLE
+    , random :: RANDOM
     , testOutput :: TESTOUTPUT
     , avar :: AVAR          
     )                         
@@ -31,6 +41,16 @@ main = runTest do
     let 
       a = matrix33 1.0 4.0 (0.0 - 1.0) 3.0 0.0 5.0 2.0 2.0 1.0
       b = matrix22 1 2 3 4
+    test "lrSplit quickCheck" do
+      -- quickCheck identityProp -- needs Arbituary implementation
+    test "lrSplit 3" do
+      let
+        {l, r, p} = lrSplit a3
+      equal (p*a3) (l*r)
+    test "lrSplit 2" do
+      let
+        {l, r, p} = lrSplit a2
+      equal (p * a2) (l * r)
     test "consRowVec" do
       let
         m2 = vec2 7 8 ⤓ b

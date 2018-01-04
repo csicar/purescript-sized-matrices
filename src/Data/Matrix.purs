@@ -6,6 +6,7 @@ import Data.Array (foldr)
 import Data.Array as Array
 import Data.Foldable (maximumBy)
 import Data.Maybe (fromJust, fromMaybe)
+import Data.Rational (Rational, fromInt)
 import Data.String (joinWith)
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Typelevel.Num (class Lt, class LtEq, class Pos, class Pred, D3, d0)
@@ -266,11 +267,11 @@ a = matrix33
     3.0 0.0 5.0
     2.0 2.0 1.0
 
-a2 :: Matrix D3 D3 Number
-a2 = matrix33
-    1.0 4.0 (0.0-1.0)
-    3.0 (0.0-12.0) 8.0
-    2.0 (0.0-6.0) 3.0
+a2 :: Matrix D3 D3 Rational
+a2 = map fromInt $ matrix33
+    1 4 (-1)
+    3 (-12) 8
+    2 (-6) 3
 
 
 a3 :: Matrix D3 D3 Number
@@ -278,3 +279,10 @@ a3 = matrix33
     0.0 4.0 (0.0-1.0)
     1.0 2.0 1.0
     2.0 1.0 5.0
+
+a4 :: Matrix D3 D3 Rational
+a4 = map fromInt $ matrix33
+    1 4 5
+    1 6 11
+    2 6 7
+

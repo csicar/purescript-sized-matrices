@@ -33,15 +33,15 @@ main ::
     )                         
     Unit
 main = runTest do
+      
   suite "Data.Matrix" do
     let
+      a = matrix33 1.0 4.0 (0.0 - 1.0) 3.0 0.0 5.0 2.0 2.0 1.0
       p = matrix33 0 0 0 1 0 0 0 1 0
+     
     test "mkPermutation" do
       equal p (mkPermutation (_ + 1))
-    let 
-      a = matrix33 1.0 4.0 (0.0 - 1.0) 3.0 0.0 5.0 2.0 2.0 1.0
-      b = matrix22 1 2 3 4
-    test "lrSplit quickCheck" do
+    -- test "lrSplit quickCheck" do
       -- quickCheck identityProp -- needs Arbituary implementation
     test "lrSplit 3" do
       let
@@ -53,6 +53,7 @@ main = runTest do
       equal (p * a2) (l * r)
     test "consRowVec" do
       let
+        b = matrix22 1 2 3 4
         m2 = vec2 7 8 ⤓ b
       equal 3 $ height m2
       equal 2 $ width m2
@@ -66,6 +67,7 @@ main = runTest do
 
     test "consColVec" do
       let
+        b = matrix22 1 2 3 4
         m2 = vec2 7 8 ⇥ b
       equal 2 $ height m2
       equal 3 $ width m2
@@ -151,6 +153,7 @@ main = runTest do
       equal m' $ transpose m
     test "resize" do
       let 
+        a = matrix33 1.0 4.0 (0.0 - 1.0) 3.0 0.0 5.0 2.0 2.0 1.0        
         sa = resize a
         sa' = matrix22 1.0 4.0 3.0 0.0
       equal sa' sa

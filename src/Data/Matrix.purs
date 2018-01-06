@@ -221,9 +221,11 @@ _lr i p m = _lr (i+1) p' pivM
 
     pivM = log $ usePivot i m'
 
+type LrSplit h w a= { l ∷ Matrix h w a, r ∷ Matrix h w a, p ∷ Matrix h w a}
+
 -- | given a invertable matrix `A` with non-zero-able diagonal returns a tuple of L and R with the property:
 -- | `A = L*R`
-lrSplit ∷ ∀h w a. Show a => Ord a => EuclideanRing a => Pos w => Pos h => Matrix h w a → { l ∷ Matrix h w a, r ∷ Matrix h w a, p ∷ Matrix h w a}
+lrSplit ∷ ∀h w a. Show a => Ord a => EuclideanRing a => Pos w => Pos h => Matrix h w a → LrSplit h w a
 lrSplit m = {r : fill rConstr, l: fill lConstr, p: p}
     where 
         {lr,p} = _lr 0 matrixOne m
@@ -235,8 +237,11 @@ lrSplit m = {r : fill rConstr, l: fill lConstr, p: p}
             | x == y = one
             | otherwise = zero
 
+-- _det ∷ ∀h w a. Nat h => Nat w => EuclideanRing a => LrSplit h w a→ a 
+-- _det = ?agg
 
-mkPermutation :: ∀h w a. CommutativeRing a => Nat h => Nat w => (Int → Int) → Matrix h w a
+
+mkPermutation ∷ ∀h w a. CommutativeRing a => Nat h => Nat w => (Int → Int) → Matrix h w a
 mkPermutation pi = fill f
     where
         f x y = if pi x == y then one else zero

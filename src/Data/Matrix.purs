@@ -2,14 +2,13 @@ module Data.Matrix where
 
 import Prelude
 
-import Data.Array (foldr)
 import Data.Array as Array
-import Data.Foldable (maximumBy)
+import Data.Foldable (class Foldable, foldMap, foldl, foldr, maximumBy, product)
 import Data.Maybe (fromJust, fromMaybe)
 import Data.Rational (Rational, fromInt)
 import Data.String (joinWith)
-import Data.Tuple (Tuple(..), fst, snd)
-import Data.Typelevel.Num (class Lt, class LtEq, class Pos, class Pred, D3, d0)
+import Data.Tuple (Tuple(Tuple), snd)
+import Data.Typelevel.Num (class Lt, class LtEq, class Pos, class Pred, D3)
 import Data.Typelevel.Num.Ops (class Add, class Succ)
 import Data.Typelevel.Num.Reps (D0, D1, D2)
 import Data.Typelevel.Num.Sets (class Nat, toInt)
@@ -127,7 +126,6 @@ fill f = Matrix $ Vec.fill (\y → Vec.fill (\x → f x y))
 unsafeIndex ∷ ∀h w a. Nat h => Nat w => Matrix h w a → Int → Int → a
 unsafeIndex (Matrix m) x y = (m `unsafeVecIndex` y) `unsafeVecIndex` x
 
-
 replicate' :: ∀w h a. Nat w => Nat h => a → Matrix h w a
 replicate' a = Matrix $ Vec.replicate' (Vec.replicate' a)
 
@@ -135,12 +133,19 @@ zipWithE :: ∀w h a b c. Nat w => Nat h =>
   (a → b → c) → Matrix h w a → Matrix h w b → Matrix h w c
 zipWithE f (Matrix a) (Matrix b) = Matrix $ Vec.zipWithE (Vec.zipWithE f) a b
 
-
 instance showMatrix :: (Nat h, Nat w, Show a) => Show (Matrix h w a) where
   show (Matrix m) = "\n  " <> (joinWith "\n  " $ Vec.toArray $ map show m)
 
 instance functorMatrix :: (Nat h, Nat w) => Functor (Matrix h w) where
   map f (Matrix m) = Matrix $ map (map f) m
+
+
+instance foldableVec ∷ (Nat h, Nat w) => Foldable (Matrix h w) where
+  foldMap f (Matrix xs) = foldMap (foldMap f) xs
+
+  foldr f z (Matrix xs) = foldr (\vec b → foldr f b vec) z xs
+
+  foldl f z (Matrix xs) = foldl (\b vec → foldl f b vec) z xs
 
 instance eqMatrix ∷ (Eq a, Nat h, Nat w) => Eq (Matrix h w a) where
   eq (Matrix a) (Matrix b) = a == b
@@ -209,7 +214,7 @@ usePivot row m = fill f
 log :: forall a. DebugWarning => Show a => a -> a
 log a = traceShow a (\_ → a)
 
-_lr ∷ ∀h w a. Pos h => Show a => Ord a => EuclideanRing a => Pos w => Int → Matrix h w a → Matrix h w a → {p ∷ Matrix h w a, lr ∷ Matrix h w a}
+_lr ∷ ∀h w a. Pos h => Ord a => EuclideanRing a => Pos w => Int → Matrix h w a → Matrix h w a → {p ∷ Matrix h w a, lr ∷ Matrix h w a}
 _lr i p m | i == (height m - 1) = {p:p, lr:m}
 _lr i p m = _lr (i+1) p' pivM
   where
@@ -219,14 +224,14 @@ _lr i p m = _lr (i+1) p' pivM
     m' = swapper m
     p' = swapper p
 
-    pivM = log $ usePivot i m'
+    pivM = usePivot i m'
 
-type LrSplit h w a= { l ∷ Matrix h w a, r ∷ Matrix h w a, p ∷ Matrix h w a}
+type LuDecomp h w a= { l ∷ Matrix h w a, u ∷ Matrix h w a, p ∷ Matrix h w a}
 
 -- | given a invertable matrix `A` with non-zero-able diagonal returns a tuple of L and R with the property:
 -- | `A = L*R`
-lrSplit ∷ ∀h w a. Show a => Ord a => EuclideanRing a => Pos w => Pos h => Matrix h w a → LrSplit h w a
-lrSplit m = {r : fill rConstr, l: fill lConstr, p: p}
+luDecomp ∷ ∀h w a. Ord a => EuclideanRing a => Pos w => Pos h => Matrix h w a → LuDecomp h w a
+luDecomp m = {u: fill rConstr, l: fill lConstr, p: p}
     where 
         {lr,p} = _lr 0 matrixOne m
         rConstr x y
@@ -236,9 +241,6 @@ lrSplit m = {r : fill rConstr, l: fill lConstr, p: p}
             | x < y = unsafeIndex lr x y
             | x == y = one
             | otherwise = zero
-
--- _det ∷ ∀h w a. Nat h => Nat w => EuclideanRing a => LrSplit h w a→ a 
--- _det = ?agg
 
 
 mkPermutation ∷ ∀h w a. CommutativeRing a => Nat h => Nat w => (Int → Int) → Matrix h w a
@@ -253,6 +255,65 @@ swapRow i j m = fill f
       | y == i = unsafeIndex m x j
       | y == j = unsafeIndex m x i
       | otherwise = unsafeIndex m x y
+
+size ∷ ∀s a. Nat s => Matrix s s a → Int 
+size m = toInt (undefined ∷ s)
+
+removeRow ∷ ∀w w' h a. Nat h => Nat w' => Nat w => Pred w w' => Int → Matrix h w a → Matrix h w' a 
+removeRow i m = fill f
+  where
+    f x y | x > i = unsafeIndex m (x+1) y
+    f x y = unsafeIndex m x y
+
+removeColumn ∷ ∀w h h' a
+  .  Nat w 
+  => Nat h
+  => Nat h'
+  => Pred h h'
+  => Int → Matrix h w a → Matrix h' w a
+removeColumn i m = fill f
+  where
+    f x y | y > i = unsafeIndex m x (y+1)
+    f x y = unsafeIndex m x y
+
+removeCross ∷ ∀w w' h h' a
+  .  Nat w
+  => Nat w'
+  => Nat h
+  => Nat h'
+  => Pred w w'
+  => Pred h h'
+  => Int → Int → Matrix h w a → Matrix h' w' a
+removeCross x y = removeRow x <<< removeColumn y
+
+replaceWithIdBlock ∷ ∀h w a
+  .  CommutativeRing a
+  => Nat w
+  => Nat h
+  => Int → Int → Matrix h w a → Matrix h w a
+replaceWithIdBlock x y m = fill f
+  where
+    f i j | x == j && y == j = one
+    f i j | x == i || y == j = zero
+    f i j = unsafeIndex m i j
+
+permSign ∷ ∀s a. Eq a => CommutativeRing a => Pos s => Matrix s s a → a 
+permSign = toVal <<< foldl f true  <<< zipWithE (*) inversionPlaces 
+  where
+    inversionPlaces = fill (\x y → if (y < x) then one else zero)
+    f acc a | a == zero = acc
+    f acc a = not acc
+    toVal true = one
+    toVal false = - one
+
+det ∷ ∀s a. Ord a => CommutativeRing a => EuclideanRing a => Pos s => Matrix s s a → a 
+det m = permSign p * product diag
+  where 
+    {u, p} = luDecomp m
+
+    diag ∷ Matrix s s a
+    diag = fill (\x y → if x==y then unsafeIndex u x y else one)
+    
 
 matrixOne ∷ ∀h w a. Semiring a => Nat h => Nat w => Matrix h w a 
 matrixOne = fill (\x y → if (x==y) then one else zero)
@@ -291,3 +352,8 @@ a4 = map fromInt $ matrix33
     1 6 11
     2 6 7
 
+a5 ∷ Matrix D3 D3 Number
+a5 = matrix33
+  2.0 0.0 0.0
+  0.0 3.0 0.0
+  0.0 0.0 4.0

@@ -2,13 +2,14 @@ module Test.Main where
 
 import Prelude
 
+import Control.Monad.Aff.Console (log, logShow)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.AVar (AVAR)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Random (RANDOM)
 import Data.Int (pow)
-import Data.Matrix (Matrix(..), a2, a3, columnVec, fill, height, lrSplit, matrix22, matrix33, mkPermutation, replicate', resize, rowVec, transpose, unsafeIndex, width, zipWithE, (⇥), (⤓))
-import Data.Rational (Rational)
+import Data.Matrix (Matrix(..), a2, a3, columnVec, det, fill, height, luDecomp, matrix22, matrix33, mkPermutation, replicate', resize, rowVec, transpose, unsafeIndex, width, zipWithE, (⇥), (⤓))
+import Data.Rational (Rational, fromInt, (%))
 import Data.Typelevel.Num (D3, d0, d1)
 import Data.Vec (vec2)
 import Test.QuickCheck (Result, (===))
@@ -20,9 +21,9 @@ import Test.Unit.QuickCheck (quickCheck)
 
 identityProp ∷ Matrix D3 D3 Rational → Result
 identityProp m = let 
-  {l, r, p} = lrSplit m
+  {l, u, p} = luDecomp m
   in
-    l*r === p*m
+    l*u === p*m
 
 main ::                  
   Eff                         
@@ -36,21 +37,53 @@ main = runTest do
       
   suite "Data.Matrix" do
     let
-      a = matrix33 1.0 4.0 (0.0 - 1.0) 3.0 0.0 5.0 2.0 2.0 1.0
+      a = matrix33 1.0 4.0 (-1.0) 3.0 0.0 5.0 2.0 2.0 1.0
       p = matrix33 0 0 0 1 0 0 0 1 0
      
     test "mkPermutation" do
       equal p (mkPermutation (_ + 1))
     -- test "lrSplit quickCheck" do
       -- quickCheck identityProp -- needs Arbituary implementation
-    test "lrSplit 3" do
+    test "luDecomp 3" do
       let
-        {l, r, p} = lrSplit a3
-      equal (p*a3) (l*r)
-    test "lrSplit 2" do
+        {l, u, p} = luDecomp a3
+      equal (p*a3) (l*u)
+    test "luDecomp 2" do
       let
-        {l, r, p} = lrSplit a2
-      equal (p * a2) (l * r)
+        {l, u, p} = luDecomp a2
+      equal (p * a2) (l * u)
+    test "luDecomp 3" do
+      let
+        m = map fromInt $ matrix33 1 4 (-1) 3 0 5 2 2 1
+      
+        {l, u, p} = luDecomp m
+
+        exp'l = matrix33 (1 % 1) (0 % 1) (0 % 1) (1 % 3) (1 % 1) (0 % 1) (2 % 3) (1 % 2) (1 % 1)
+        exp'u = matrix33 (3 % 1) (0 % 1) (5 % 1) (0 % 1) (4 % 1) (- 8 % 3) (0 % 1) (0 % 1) (- 1 % 1)
+        exp'p = transpose $  matrix33 (0 % 1) (1 % 1) (0 % 1) (1 % 1) (0 % 1) (0 % 1) (0 % 1) (0 % 1) (1 % 1)
+      equal exp'l l
+      equal exp'u u
+      equal exp'p p
+    test "luDecomp 4" do
+      let 
+        m = map fromInt $ matrix33 1 8 (-1) 3 21 5 2 (-6) 1
+
+        {l, u, p} = luDecomp m
+        exp'p = map fromInt $ matrix33 0 1 0 0 0 1 1 0 0
+        exp'l = matrix33 one zero zero (2 % 3) one zero (1 % 3) (-5 % 100) one
+      
+      logShow l
+      logShow u
+      logShow p
+      equal (p*m) (l*u)
+      equal exp'l l
+    test "det" do
+      let
+         m = map fromInt $ matrix33 1 4 (-1) 3 0 5 2 2 1
+         m2 = map fromInt $ matrix33 1 8 (-1) 3 21 5 2 (-6) 1
+
+      equal (fromInt 12) (det m)
+      equal (fromInt 167) (det m2)
     test "consRowVec" do
       let
         b = matrix22 1 2 3 4

@@ -4,20 +4,19 @@ import Prelude
 
 import Data.Array as Array
 import Data.Foldable (class Foldable, foldMap, foldl, foldr, maximumBy, product)
-import Data.Maybe (fromJust, fromMaybe)
+import Data.Maybe (Maybe, fromJust, fromMaybe)
 import Data.Rational (Rational, fromInt)
 import Data.String (joinWith)
 import Data.Tuple (Tuple(Tuple), snd)
-import Data.Typelevel.Num (class Lt, class LtEq, class Pos, class Pred, D3)
+import Data.Typelevel.Num (class Lt, class LtEq, class Mul, class Pos, class Pred, D3)
 import Data.Typelevel.Num.Ops (class Add, class Succ)
 import Data.Typelevel.Num.Reps (D0, D1, D2)
 import Data.Typelevel.Num.Sets (class Nat, toInt)
 import Data.Typelevel.Undefined (undefined)
-import Data.Vec (Vec, index', range')
+import Data.Vec (Vec, range')
 import Data.Vec as Vec
 import Debug.Trace (class DebugWarning, spy, traceShow)
 import Partial.Unsafe (unsafePartial)
-
 
 -- stored as Vec of rows
 -- | Matrix with height `h`, width `w` and contained value `a`
@@ -29,8 +28,16 @@ height _ = toInt (undefined ∷ h)
 width ∷ ∀h w a. Nat h => Nat w => Matrix h w a → Int 
 width _ = toInt (undefined ∷ w)
 
+index ∷ ∀x y h w a. Nat x => Nat y => Lt x w => Lt y h => Matrix h w a → x → y → a 
+index (Matrix m) i j= Vec.index (Vec.index m (undefined ∷ y)) (undefined :: x)
+
+index' ∷ ∀h w a. Nat h => Nat w => Int → Int → Matrix h w a → Maybe a 
+index' x y (Matrix m) = do
+  row <- Vec.index' m y
+  Vec.index' row x
+
 unsafeVecIndex ∷ ∀s a. Nat s => Vec s a → Int → a
-unsafeVecIndex v i = unsafePartial $ fromJust $ index' v i
+unsafeVecIndex v i = unsafePartial $ fromJust $ Vec.index' v i
 
 empty :: ∀a. Matrix D0 D0 a
 empty = Matrix Vec.empty
@@ -68,6 +75,12 @@ concatV (Matrix a) (Matrix b) = Matrix $ Vec.concat a b
 
 concatH :: forall h w1 w2 w a. Add w1 w2 w => Nat h => Matrix h w1 a → Matrix h w2 a → Matrix h w a
 concatH (Matrix a) (Matrix b) = Matrix $ Vec.zipWithE (Vec.concat) a b
+
+fromVec ∷ ∀s h w a. Nat s => Nat h => Nat w => Mul h w s => Vec s a → Matrix h w a 
+fromVec vec = fill f
+  where
+    f x y = unsafeVecIndex vec (x+w*y)
+    w = toInt (undefined ∷ w)
 
 singleton :: ∀a. a → Matrix D1 D1 a
 singleton x = Vec.singleton x ⤓ Vec.empty ⇥ empty

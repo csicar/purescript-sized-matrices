@@ -5,7 +5,6 @@ import Prelude
 import Data.Array as Array
 import Data.Foldable (class Foldable, foldMap, foldl, foldr, maximumBy, product)
 import Data.Maybe (Maybe, fromJust, fromMaybe)
-import Data.Rational (Rational, fromInt)
 import Data.String (joinWith)
 import Data.Tuple (Tuple(Tuple), snd)
 import Data.Typelevel.Num (class Lt, class LtEq, class Mul, class Pos, class Pred, D3)
@@ -15,7 +14,6 @@ import Data.Typelevel.Num.Sets (class Nat, toInt)
 import Data.Typelevel.Undefined (undefined)
 import Data.Vec (Vec, range')
 import Data.Vec as Vec
-import Debug.Trace (class DebugWarning, spy, traceShow)
 import Partial.Unsafe (unsafePartial)
 
 -- stored as Vec of rows
@@ -42,7 +40,7 @@ unsafeVecIndex v i = unsafePartial $ fromJust $ Vec.index' v i
 empty :: ∀a. Matrix D0 D0 a
 empty = Matrix Vec.empty
 
-consRowVec :: ∀h h' w w' a. Succ h h' => Nat w =>
+consRowVec :: ∀h h' w a. Succ h h' => Nat w =>
   Vec.Vec w a → Matrix h w a → Matrix h' w a
 consRowVec vec (Matrix m) = Matrix $ Vec.cons vec m
 
@@ -63,7 +61,7 @@ unconsV (Matrix m) = {head: head, tail: Matrix tail}
 --   where
 --     m' = map Vec.uncons m
 
-snocRowVec :: ∀h h' w w' a. Succ h h' => Nat w =>
+snocRowVec :: ∀h h' w a. Succ h h' => Nat w =>
   Vec.Vec w a → Matrix h w a → Matrix h' w a
 snocRowVec vec (Matrix m) = Matrix $ Vec.snoc vec m
 
@@ -133,7 +131,7 @@ matrix33 x11 x12 x13 x21 x22 x23 x31 x32 x33 =
       x21 x22 x23
       x31 x32 x33
 
-fill :: ∀h w ih iw a. Nat h => Nat w =>  (Int → Int → a) → Matrix h w a
+fill :: ∀h w a. Nat h => Nat w =>  (Int → Int → a) → Matrix h w a
 fill f = Matrix $ Vec.fill (\y → Vec.fill (\x → f x y))
 
 unsafeIndex ∷ ∀h w a. Nat h => Nat w => Matrix h w a → Int → Int → a
@@ -223,9 +221,6 @@ usePivot row m = fill f
 
       chooseFactor :: Int → Int → a
       chooseFactor x y = zero - (unsafeIndex m row y) / pivot
-
-log :: forall a. DebugWarning => Show a => a -> a
-log a = traceShow a (\_ → a)
 
 _lr ∷ ∀h w a. Pos h => Ord a => EuclideanRing a => Pos w => Int → Matrix h w a → Matrix h w a → {p ∷ Matrix h w a, lr ∷ Matrix h w a}
 _lr i p m | i == (height m - 1) = {p:p, lr:m}
@@ -339,34 +334,3 @@ instance semiringMatrix :: (Nat s, CommutativeRing a) => Semiring (Matrix s s a)
 
 instance ringMatrix :: (Nat s, CommutativeRing a) => Ring (Matrix s s a) where
   sub a b = add a (negateMatrix b)
-
-a :: Matrix D3 D3 Number
-a = matrix33
-    1.0 4.0 (0.0 - 1.0)
-    3.0 0.0 5.0
-    2.0 2.0 1.0
-
-a2 :: Matrix D3 D3 Rational
-a2 = map fromInt $ matrix33
-    1 4 (-1)
-    3 (-12) 8
-    2 (-6) 3
-
-
-a3 :: Matrix D3 D3 Number
-a3 = matrix33
-    0.0 4.0 (0.0-1.0)
-    1.0 2.0 1.0
-    2.0 1.0 5.0
-
-a4 :: Matrix D3 D3 Rational
-a4 = map fromInt $ matrix33
-    1 4 5
-    1 6 11
-    2 6 7
-
-a5 ∷ Matrix D3 D3 Number
-a5 = matrix33
-  2.0 0.0 0.0
-  0.0 3.0 0.0
-  0.0 0.0 4.0

@@ -2,11 +2,7 @@ module Test.Main where
 
 import Prelude
 
-import Control.Monad.Aff.Console (log, logShow)
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.AVar (AVAR)
-import Control.Monad.Eff.Console (CONSOLE)
-import Control.Monad.Eff.Random (RANDOM)
+import Effect
 import Data.Int (pow)
 import Data.Matrix (Matrix(..), a2, a3, columnVec, det, fill, height, luDecomp, matrix22, matrix33, mkPermutation, replicate', resize, rowVec, transpose, unsafeIndex, width, zipWithE, (⇥), (⤓))
 import Data.Rational (Rational, fromInt, (%))
@@ -15,9 +11,40 @@ import Data.Vec (vec2)
 import Test.QuickCheck (Result, (===))
 import Test.Unit (suite, test)
 import Test.Unit.Assert (equal)
-import Test.Unit.Console (TESTOUTPUT)
 import Test.Unit.Main (runTest)
 import Test.Unit.QuickCheck (quickCheck)
+
+
+a1 :: Matrix D3 D3 Number
+a1 = matrix33
+    1.0 4.0 (0.0 - 1.0)
+    3.0 0.0 5.0
+    2.0 2.0 1.0
+
+a2 :: Matrix D3 D3 Rational
+a2 = map fromInt $ matrix33
+    1 4 (-1)
+    3 (-12) 8
+    2 (-6) 3
+
+
+a3 :: Matrix D3 D3 Number
+a3 = matrix33
+    0.0 4.0 (0.0-1.0)
+    1.0 2.0 1.0
+    2.0 1.0 5.0
+
+a4 :: Matrix D3 D3 Rational
+a4 = map fromInt $ matrix33
+    1 4 5
+    1 6 11
+    2 6 7
+
+a5 ∷ Matrix D3 D3 Number
+a5 = matrix33
+  2.0 0.0 0.0
+  0.0 3.0 0.0
+  0.0 0.0 4.0
 
 identityProp ∷ Matrix D3 D3 Rational → Result
 identityProp m = let 
@@ -26,12 +53,7 @@ identityProp m = let
     l*u === p*m
 
 main ::                  
-  Eff                         
-    ( console :: CONSOLE
-    , random :: RANDOM
-    , testOutput :: TESTOUTPUT
-    , avar :: AVAR          
-    )                         
+  Effect                      
     Unit
 main = runTest do
       
@@ -72,9 +94,9 @@ main = runTest do
         exp'p = map fromInt $ matrix33 0 1 0 0 0 1 1 0 0
         exp'l = matrix33 one zero zero (2 % 3) one zero (1 % 3) (-5 % 100) one
       
-      logShow l
-      logShow u
-      logShow p
+      -- logShow l
+      -- logShow u
+      -- logShow p
       equal (p*m) (l*u)
       equal exp'l l
     test "det" do

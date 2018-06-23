@@ -4,7 +4,11 @@ import Prelude
 
 import Effect
 import Data.Int (pow)
-import Data.Matrix (Matrix(..), a2, a3, columnVec, det, fill, height, luDecomp, matrix22, matrix33, mkPermutation, replicate', resize, rowVec, transpose, unsafeIndex, width, zipWithE, (⇥), (⤓))
+import Data.Matrix (Matrix(..), columnVec, fill, height, mkPermutation, replicate', rowVec, unsafeIndex, width, zipWithE)
+import Data.Matrix.Reps (matrix22, matrix33)
+import Data.Matrix.Transformations (resize, transpose)
+import Data.Matrix.Operations ((⇥), (⤓))
+import Data.Matrix.Algorithms (det, luDecomp)
 import Data.Rational (Rational, fromInt, (%))
 import Data.Typelevel.Num (D3, d0, d1)
 import Data.Vec (vec2)
@@ -13,7 +17,6 @@ import Test.Unit (suite, test)
 import Test.Unit.Assert (equal)
 import Test.Unit.Main (runTest)
 import Test.Unit.QuickCheck (quickCheck)
-
 
 a1 :: Matrix D3 D3 Number
 a1 = matrix33
@@ -47,21 +50,21 @@ a5 = matrix33
   0.0 0.0 4.0
 
 identityProp ∷ Matrix D3 D3 Rational → Result
-identityProp m = let 
+identityProp m = let
   {l, u, p} = luDecomp m
   in
     l*u === p*m
 
-main ::                  
-  Effect                      
+main ::
+  Effect
     Unit
 main = runTest do
-      
+
   suite "Data.Matrix" do
     let
       a = matrix33 1.0 4.0 (-1.0) 3.0 0.0 5.0 2.0 2.0 1.0
       p = matrix33 0 0 0 1 0 0 0 1 0
-     
+
     test "mkPermutation" do
       equal p (mkPermutation (_ + 1))
     -- test "lrSplit quickCheck" do
@@ -77,7 +80,7 @@ main = runTest do
     test "luDecomp 3" do
       let
         m = map fromInt $ matrix33 1 4 (-1) 3 0 5 2 2 1
-      
+
         {l, u, p} = luDecomp m
 
         exp'l = matrix33 (1 % 1) (0 % 1) (0 % 1) (1 % 3) (1 % 1) (0 % 1) (2 % 3) (1 % 2) (1 % 1)
@@ -87,24 +90,25 @@ main = runTest do
       equal exp'u u
       equal exp'p p
     test "luDecomp 4" do
-      let 
+      let
         m = map fromInt $ matrix33 1 8 (-1) 3 21 5 2 (-6) 1
 
         {l, u, p} = luDecomp m
         exp'p = map fromInt $ matrix33 0 1 0 0 0 1 1 0 0
         exp'l = matrix33 one zero zero (2 % 3) one zero (1 % 3) (-5 % 100) one
-      
+
       -- logShow l
       -- logShow u
       -- logShow p
       equal (p*m) (l*u)
       equal exp'l l
-    test "det" do
+    test "det1" do
       let
-         m = map fromInt $ matrix33 1 4 (-1) 3 0 5 2 2 1
-         m2 = map fromInt $ matrix33 1 8 (-1) 3 21 5 2 (-6) 1
-
+        m = map fromInt $ matrix33 1 4 (-1) 3 0 5 2 2 1
       equal (fromInt 12) (det m)
+    test "det2" do
+      let
+        m2 = map fromInt $ matrix33 1 8 (-1) 3 21 5 2 (-6) 1
       equal (fromInt 167) (det m2)
     test "consRowVec" do
       let
@@ -133,7 +137,7 @@ main = runTest do
       equal 8 $ unsafeIndex m2 0 1
       equal 3 $ unsafeIndex m2 1 1
       equal 4 $ unsafeIndex m2 2 1
-    
+
     test "fill" do
       let
         m = fill (\x y → (1+x)*(1+y))
@@ -147,31 +151,31 @@ main = runTest do
       equal m' m
 
     test "zipWithE" do
-      let 
+      let
         m = matrix22 "hi" "hello" "foo" "bar"
         n = matrix22 "there" "asd" "bsd" "asd"
         u = matrix22 "hithere" "helloasd" "foobsd" "barasd"
       equal u $ zipWithE (<>) m n
 
     test "map" do
-      let 
+      let
         m = matrix22 1 2 3 4
         n = matrix22 1 4 9 16
       equal n $ map (_ `pow` 2) m
-    
+
     test "add" do
-      let 
+      let
         m = matrix22 1 2 3 4
         n = matrix22 5 6 7 8
         r = matrix22 6 8 10 12
       equal r $ m + n
-    
+
     test "negate" do
-      let 
+      let
         m = matrix22 1 2 3 4
         r = matrix22 (0-1) (0-2) (0-3) (0-4)
       equal m $ negate r
-    
+
     test "columnVec" do
       let
         m = matrix22 5 3 0 6
@@ -179,7 +183,7 @@ main = runTest do
         r' = vec2 3 6
       equal r $ columnVec m d0
       equal r' $ columnVec m d1
-    
+
     test "rowVec" do
       let
         m = matrix22 5 3 0 6
@@ -187,7 +191,7 @@ main = runTest do
         r' = vec2 0 6
       equal r $ rowVec m d0
       equal r' $ rowVec m d1
-    
+
     test "mul" do
       let
         m = matrix33 1 2 3 4 5 6 7 8 9
@@ -200,15 +204,15 @@ main = runTest do
       equal zero $ zero * n
       equal r $ m * n
       equal r' $ n * m
-    
+
     test "transpose" do
       let
         m = matrix22 1 2 3 4
         m' = matrix22 1 3 2 4
       equal m' $ transpose m
     test "resize" do
-      let 
-        a = matrix33 1.0 4.0 (0.0 - 1.0) 3.0 0.0 5.0 2.0 2.0 1.0        
+      let
+        a = matrix33 1.0 4.0 (0.0 - 1.0) 3.0 0.0 5.0 2.0 2.0 1.0
         sa = resize a
         sa' = matrix22 1.0 4.0 3.0 0.0
       equal sa' sa

@@ -54,6 +54,7 @@ Sized-Matrices
   [3,4]
   [5,6]
 > fromVec vec :: Matrix D2 D2 Int
+... will be an error, since dimentions don't match up
 > lrSplit $ matrix33 1.0 4.0 (0.0 - 1.0) 3.0 0.0 5.0 2.0 2.0 1.0
   { l:
       [1.0,0.0,0.0]
@@ -64,7 +65,6 @@ Sized-Matrices
       [0.0,-12.0,8.0]
       [0.0,0.0,-1.0]
   }
-... will be an error, since dimentions don't match up
 ```
 
 Features

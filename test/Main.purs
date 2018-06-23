@@ -4,9 +4,9 @@ import Prelude
 
 import Effect
 import Data.Int (pow)
-import Data.Matrix (Matrix(..), columnVec, fill, height, mkPermutation, replicate', rowVec, unsafeIndex, width, zipWithE)
+import Data.Matrix (Matrix(..), column, fill, height, replicate', row, unsafeIndex, width, zipWithE)
 import Data.Matrix.Reps (matrix11, matrix22, matrix33)
-import Data.Matrix.Transformations (resize, transpose)
+import Data.Matrix.Transformations (resize, transpose, mkPermutation)
 import Data.Matrix.Operations ((⇥), (⤓))
 import Data.Matrix.Algorithms (det, luDecomp, inverse)
 import Data.Rational (Rational, fromInt, (%))
@@ -17,6 +17,7 @@ import Test.Unit (suite, test)
 import Test.Unit.Assert (equal)
 import Test.Unit.Main (runTest)
 import Test.Unit.QuickCheck (quickCheck)
+import Partial.Unsafe (unsafePartial)
 
 a1 :: Matrix D3 D3 Number
 a1 = matrix33
@@ -124,12 +125,12 @@ main = runTest do
       equal 3 $ height m2
       equal 2 $ width m2
 
-      equal 7 $ unsafeIndex m2 0 0
-      equal 8 $ unsafeIndex m2 1 0
-      equal 1 $ unsafeIndex m2 0 1
-      equal 2 $ unsafeIndex m2 1 1
-      equal 3 $ unsafeIndex m2 0 2
-      equal 4 $ unsafeIndex m2 1 2
+      equal 7 $ unsafePartial $ unsafeIndex m2 0 0
+      equal 8 $ unsafePartial $ unsafeIndex m2 1 0
+      equal 1 $ unsafePartial $ unsafeIndex m2 0 1
+      equal 2 $ unsafePartial $ unsafeIndex m2 1 1
+      equal 3 $ unsafePartial $ unsafeIndex m2 0 2
+      equal 4 $ unsafePartial $ unsafeIndex m2 1 2
 
     test "consColVec" do
       let
@@ -138,12 +139,12 @@ main = runTest do
       equal 2 $ height m2
       equal 3 $ width m2
 
-      equal 7 $ unsafeIndex m2 0 0
-      equal 1 $ unsafeIndex m2 1 0
-      equal 2 $ unsafeIndex m2 2 0
-      equal 8 $ unsafeIndex m2 0 1
-      equal 3 $ unsafeIndex m2 1 1
-      equal 4 $ unsafeIndex m2 2 1
+      equal 7 $ unsafePartial $ unsafeIndex m2 0 0
+      equal 1 $ unsafePartial $ unsafeIndex m2 1 0
+      equal 2 $ unsafePartial $ unsafeIndex m2 2 0
+      equal 8 $ unsafePartial $ unsafeIndex m2 0 1
+      equal 3 $ unsafePartial $ unsafeIndex m2 1 1
+      equal 4 $ unsafePartial $ unsafeIndex m2 2 1
 
     test "fill" do
       let
@@ -183,21 +184,21 @@ main = runTest do
         r = matrix22 (0-1) (0-2) (0-3) (0-4)
       equal m $ negate r
 
-    test "columnVec" do
+    test "column" do
       let
         m = matrix22 5 3 0 6
         r = vec2 5 0
         r' = vec2 3 6
-      equal r $ columnVec m d0
-      equal r' $ columnVec m d1
+      equal r $ column m d0
+      equal r' $ column m d1
 
-    test "rowVec" do
+    test "row" do
       let
         m = matrix22 5 3 0 6
         r = vec2 5 3
         r' = vec2 0 6
-      equal r $ rowVec m d0
-      equal r' $ rowVec m d1
+      equal r $ row m d0
+      equal r' $ row m d1
 
     test "mul" do
       let

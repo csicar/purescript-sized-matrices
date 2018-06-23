@@ -19,7 +19,7 @@ Sized-Matrices
   [0,1,0,0]
   [0,0,1,0]
   [0,0,0,1]
-> m1 = matrix2d 1 2 3 4 * matrix2d 1 2 3 4 
+> m1 = matrix22 1 2 3 4 * matrix22 1 2 3 4 
   [7,10]
   [15,22]
 > transpose m1
@@ -32,7 +32,7 @@ Sized-Matrices
   [0,1,2]
   [1,2,3]
   [2,3,4]
-> lrSplit $ matrix3d 1.0 4.0 (0.0 - 1.0) 3.0 0.0 5.0 2.0 2.0 1.0
+> lrSplit $ matrix33 1.0 4.0 (0.0 - 1.0) 3.0 0.0 5.0 2.0 2.0 1.0
   { l:
       [1.0,0.0,0.0]
       [3.0,1.0,0.0]
@@ -61,7 +61,9 @@ Features
 
 - typesafe size
 - Complete `Semiring` and `Ring` implementation
-- Mmtrix multiplication
+- Matrix multiplication
 - transpose
 - matrix addition
+- Determinant
+- Inverse Matrix
 - LR splitting for solving linear equasion systems

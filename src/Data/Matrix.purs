@@ -20,8 +20,6 @@ import Partial.Unsafe (unsafePartial)
 -- | Matrix with height `h`, width `w` and contained value `a`
 newtype Matrix h w a = Matrix (Vec.Vec h (Vec.Vec w a))
 
--- | ## Creation
-
 -- | create Matrix of size hxw with a generator-function
 -- |
 -- | ```purescript
@@ -208,6 +206,19 @@ mulMatrix a b = fill (\x y → rowVecUnsafe a y `Vec.dotProduct` columnVecUnsafe
 
 matrixOne ∷ ∀h w a. Semiring a => Nat h => Nat w => Matrix h w a
 matrixOne = fill (\x y → if (x==y) then one else zero)
+
+scalarMul :: ∀h w a. Nat h => Nat w => Semiring a => a -> Matrix h w a -> Matrix h w a 
+scalarMul a = map (a * _)
+
+-- | Convert Matrix to Array
+-- |
+-- | ```purescript
+-- | > toArray (matrix22 1 2 3 4)
+-- | [[1,2],[3,4]]
+-- | ```
+-- |
+toArray :: ∀h w a. Nat h => Nat w => Matrix h w a -> Array (Array a)
+toArray (Matrix m) = Vec.toArray (map Vec.toArray m)
 
 
 instance showMatrix :: (Nat h, Nat w, Show a) => Show (Matrix h w a) where

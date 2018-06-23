@@ -5,10 +5,10 @@ import Prelude
 import Effect
 import Data.Int (pow)
 import Data.Matrix (Matrix(..), columnVec, fill, height, mkPermutation, replicate', rowVec, unsafeIndex, width, zipWithE)
-import Data.Matrix.Reps (matrix22, matrix33)
+import Data.Matrix.Reps (matrix11, matrix22, matrix33)
 import Data.Matrix.Transformations (resize, transpose)
 import Data.Matrix.Operations ((⇥), (⤓))
-import Data.Matrix.Algorithms (det, luDecomp)
+import Data.Matrix.Algorithms (det, luDecomp, inverse)
 import Data.Rational (Rational, fromInt, (%))
 import Data.Typelevel.Num (D3, d0, d1)
 import Data.Vec (vec2)
@@ -48,12 +48,6 @@ a5 = matrix33
   2.0 0.0 0.0
   0.0 3.0 0.0
   0.0 0.0 4.0
-
-identityProp ∷ Matrix D3 D3 Rational → Result
-identityProp m = let
-  {l, u, p} = luDecomp m
-  in
-    l*u === p*m
 
 main ::
   Effect
@@ -110,6 +104,19 @@ main = runTest do
       let
         m2 = map fromInt $ matrix33 1 8 (-1) 3 21 5 2 (-6) 1
       equal (fromInt 167) (det m2)
+    test "inverse" do
+      equal (matrix11 2.0) (inverse $ matrix11 0.5)
+    test "inverse2" do
+      equal
+        (map fromInt $ matrix22 1 2 3 4)
+        (inverse $ matrix22 (-2%1) (1%1) (3%2) (-1%2))
+    test "inverse Identity" do
+      equal
+        ( a4 * inverse a4)
+        one
+      equal
+        (a2 * inverse a2)
+        one
     test "consRowVec" do
       let
         b = matrix22 1 2 3 4

@@ -61,25 +61,25 @@ liftTuple ∷ ∀a b. (a → b) → Tuple a a → Tuple b b
 liftTuple f (Tuple a b) = Tuple (f a) (f b)
 
 usePivot ∷ ∀h w a. Pos w => Pos h => EuclideanRing a => Int → Matrix h w a → Matrix h w a
-usePivot row m = fill f
+usePivot row m = unsafePartial $ fill f
     where
-      f :: Int → Int → a
+      f :: Partial => Int → Int → a
       f x y
         | x == row && y > row = zero - chooseFactor x y
         | y > row && x > row = (unsafeIndex m x row) * (chooseFactor x y) + unsafeIndex m x y
         | otherwise = unsafeIndex m x y
 
-      pivot :: a
+      pivot :: Partial => a
       pivot = unsafeIndex m row row
 
-      chooseFactor :: Int → Int → a
+      chooseFactor :: Partial => Int → Int → a
       chooseFactor x y = zero - (unsafeIndex m row y) / pivot
 
 _lr ∷ ∀h w a. Pos h => Ord a => EuclideanRing a => Pos w => Int → Matrix h w a → Matrix h w a → {p ∷ Matrix h w a, lr ∷ Matrix h w a}
 _lr i p m | i == (height m - 1) = {p:p, lr:m}
 _lr i p m = _lr (i+1) p' pivM
   where
-    maxRowIndex = findMaxIndex $ columnVecUnsafe m i
+    maxRowIndex = findMaxIndex $ unsafePartial $ columnUnsafe m i
     swapper = swapRow maxRowIndex i
 
     m' = swapper m
@@ -97,9 +97,9 @@ luDecomp m = {u: fill rConstr, l: fill lConstr, p: p}
     where
         {lr,p} = _lr 0 matrixOne m
         rConstr x y
-            | x >= y = unsafeIndex lr x y
+            | x >= y = unsafePartial $ unsafeIndex lr x y
             | otherwise = zero
         lConstr x y
-            | x < y = unsafeIndex lr x y
+            | x < y = unsafePartial $ unsafeIndex lr x y
             | x == y = one
             | otherwise = zero

@@ -1,8 +1,36 @@
-module Data.Matrix where
+module Data.Matrix 
+  ( Matrix(..)
+  , fill
+  , fromVec
+  , toArray
+  , replicate'
+  , height
+  , width
+  , size
+  , index
+  , index'
+  , unsafeIndex
+  , columnVec
+  , columnVecUnsafe
+  , rowVec
+  , rowVecUnsafe
+  , concatH
+  , concatV
+  , zipWithE
+  , zipE
+  , negateMatrix
+  , mulMatrix
+  , matrixOne
+  , matrixZero
+  , scalarMul
+  ) where
 
 import Prelude
 
 import Data.Array as Array
+import Data.VectorField (class VectorField)
+import Data.Group (class Group)
+import Data.Semigroup.Commutative (class Commutative)
 import Data.Foldable (class Foldable, foldMap, foldl, foldr, maximumBy, product)
 import Data.Maybe (Maybe, fromJust, fromMaybe)
 import Data.String (joinWith)
@@ -18,8 +46,10 @@ import Partial.Unsafe (unsafePartial)
 
 -- stored as Vec of rows
 -- | Matrix with height `h`, width `w` and contained value `a`
+
 newtype Matrix h w a = Matrix (Vec.Vec h (Vec.Vec w a))
 
+-- | ## Creation
 -- | create Matrix of size hxw with a generator-function
 -- |
 -- | ```purescript
@@ -30,6 +60,34 @@ newtype Matrix h w a = Matrix (Vec.Vec h (Vec.Vec w a))
 -- |
 fill :: ∀h w a. Nat h => Nat w =>  (Int → Int → a) → Matrix h w a
 fill f = Matrix $ Vec.fill (\y → Vec.fill (\x → f x y))
+
+
+-- |
+-- | ```purescript
+-- | > fromVec (Vec.vec3 1 2 3) :: Matrix D1 D3 _
+-- |   [1,2,3]
+-- | 
+-- | > fromVec (Vec.vec3 1 2 3) :: Matrix D3 D1 _
+-- |   [1]
+-- |   [2]
+-- |   [3]
+-- | ```
+-- |
+fromVec ∷ ∀s h w a. Nat s => Nat h => Nat w => Mul h w s => Vec s a → Matrix h w a
+fromVec vec = fill f
+  where
+    f x y = unsafePartial $ unsafeVecIndex vec (x+w*y)
+    w = toInt (undefined ∷ w)
+
+-- | Convert Matrix to Array
+-- |
+-- | ```purescript
+-- | > toArray (matrix22 1 2 3 4)
+-- | [[1,2],[3,4]]
+-- | ```
+-- |
+toArray :: ∀h w a. Nat h => Nat w => Matrix h w a -> Array (Array a)
+toArray (Matrix m) = Vec.toArray (map Vec.toArray m)
 
 -- | create Matrix with one value
 -- |
@@ -43,12 +101,8 @@ fill f = Matrix $ Vec.fill (\y → Vec.fill (\x → f x y))
 replicate' :: ∀w h a. Nat w => Nat h => a → Matrix h w a
 replicate' a = Matrix $ Vec.replicate' (Vec.replicate' a)
 
-mkPermutation ∷ ∀h w a. CommutativeRing a => Nat h => Nat w => (Int → Int) → Matrix h w a
-mkPermutation pi = fill f
-    where
-        f x y = if pi x == y then one else zero
-
 -- | ## Basic Accesors
+
 -- | height of the matrix (aka number of rows)
 height ∷ ∀h w a. Nat h => Nat w => Matrix h w a → Int
 height _ = toInt (undefined ∷ h)
@@ -93,10 +147,10 @@ index' x y (Matrix m) = do
   row <- Vec.index' m y
   Vec.index' row x
 
-unsafeIndex ∷ ∀h w a. Nat h => Nat w => Matrix h w a → Int → Int → a
+unsafeIndex ∷ ∀h w a. Partial => Nat h => Nat w => Matrix h w a → Int → Int → a
 unsafeIndex (Matrix m) x y = (m `unsafeVecIndex` y) `unsafeVecIndex` x
 
-unsafeVecIndex ∷ ∀s a. Nat s => Vec s a → Int → a
+unsafeVecIndex ∷ ∀s a. Partial => Nat s => Vec s a → Int → a
 unsafeVecIndex v i = unsafePartial $ fromJust $ Vec.index' v i
 
 -- | get vector for column
@@ -111,7 +165,7 @@ unsafeVecIndex v i = unsafePartial $ fromJust $ Vec.index' v i
 columnVec :: ∀h w a x. Nat x => Lt x w => Nat h => Matrix h w a → x → Vec.Vec h a
 columnVec (Matrix m) i = map (\row → row `Vec.index` (undefined :: x) ) m
 
-columnVecUnsafe :: ∀h w a. Nat h => Nat w => Matrix h w a → Int → Vec.Vec h a
+columnVecUnsafe :: ∀h w a. Partial => Nat h => Nat w => Matrix h w a → Int → Vec.Vec h a
 columnVecUnsafe (Matrix m) i = map (\row → unsafePartial $ Array.unsafeIndex (Vec.toArray row) i) m
 
 -- | get vector for row
@@ -126,7 +180,7 @@ columnVecUnsafe (Matrix m) i = map (\row → unsafePartial $ Array.unsafeIndex (
 rowVec :: ∀h w a y. Nat y => Lt y h => Nat w => Matrix h w a → y → Vec.Vec w a
 rowVec (Matrix m) i = m `Vec.index` (undefined :: y)
 
-rowVecUnsafe :: ∀h w a. Nat h => Nat w => Matrix h w a → Int → Vec.Vec w a
+rowVecUnsafe :: ∀h w a. Partial => Nat h => Nat w => Matrix h w a → Int → Vec.Vec w a
 rowVecUnsafe (Matrix m) i =  unsafePartial $ Array.unsafeIndex (Vec.toArray m) i
 
 
@@ -154,22 +208,6 @@ concatV (Matrix a) (Matrix b) = Matrix $ Vec.concat a b
 concatH :: forall h w1 w2 w a. Add w1 w2 w => Nat h => Matrix h w1 a → Matrix h w2 a → Matrix h w a
 concatH (Matrix a) (Matrix b) = Matrix $ Vec.zipWithE (Vec.concat) a b
 
--- |
--- | ```purescript
--- | > fromVec (Vec.vec3 1 2 3) :: Matrix D1 D3 _
--- |   [1,2,3]
--- | 
--- | > fromVec (Vec.vec3 1 2 3) :: Matrix D3 D1 _
--- |   [1]
--- |   [2]
--- |   [3]
--- | ```
--- |
-fromVec ∷ ∀s h w a. Nat s => Nat h => Nat w => Mul h w s => Vec s a → Matrix h w a
-fromVec vec = fill f
-  where
-    f x y = unsafeVecIndex vec (x+w*y)
-    w = toInt (undefined ∷ w)
 
 -- | Zip Matrices with function with **E**xactly the same size
 -- |
@@ -194,31 +232,37 @@ zipWithE f (Matrix a) (Matrix b) = Matrix $ Vec.zipWithE (Vec.zipWithE f) a b
 zipE :: ∀w h a b. Nat w => Nat h => Matrix h w a -> Matrix h w b -> Matrix h w (Tuple a b)
 zipE = zipWithE Tuple 
 
-addMatrix :: ∀h w a. Nat h => Nat w => CommutativeRing a => Matrix h w a → Matrix h w a → Matrix h w a
+addMatrix :: ∀h w a. Nat h => Nat w => Semiring a => Matrix h w a → Matrix h w a → Matrix h w a
 addMatrix a  b = zipWithE (+) a b
 
-negateMatrix :: ∀h w a. Nat h => Nat w => CommutativeRing a => Matrix h w a → Matrix h w a
+negateMatrix :: ∀h w a. Nat h => Nat w => Ring a => Matrix h w a → Matrix h w a
 negateMatrix = map (\v → zero - v)
 
-
 mulMatrix :: ∀h w a. Nat h => Nat w => CommutativeRing a => Matrix h w a → Matrix w h a → Matrix h h a
-mulMatrix a b = fill (\x y → rowVecUnsafe a y `Vec.dotProduct` columnVecUnsafe b x)
+mulMatrix a b = unsafePartial $ fill (\x y → rowVecUnsafe a y `Vec.dotProduct` columnVecUnsafe b x)
 
 matrixOne ∷ ∀h w a. Semiring a => Nat h => Nat w => Matrix h w a
 matrixOne = fill (\x y → if (x==y) then one else zero)
 
+matrixZero :: ∀h w a. Semiring a => Nat h => Nat w => Matrix h w a 
+matrixZero = replicate' zero
+
 scalarMul :: ∀h w a. Nat h => Nat w => Semiring a => a -> Matrix h w a -> Matrix h w a 
 scalarMul a = map (a * _)
 
--- | Convert Matrix to Array
--- |
--- | ```purescript
--- | > toArray (matrix22 1 2 3 4)
--- | [[1,2],[3,4]]
--- | ```
--- |
-toArray :: ∀h w a. Nat h => Nat w => Matrix h w a -> Array (Array a)
-toArray (Matrix m) = Vec.toArray (map Vec.toArray m)
+instance semigroupMatrix ∷ (Nat h, Nat w, Semiring a) => Semigroup (Matrix h w a) where
+  append = addMatrix
+
+instance commutativeSemigroupMatrix :: (Nat h, Nat w, Semiring a) => Commutative (Matrix h w a)
+
+instance monoidMatrix ∷ (Nat h, Nat w, Semiring a) => Monoid (Matrix h w a) where
+  mempty = matrixZero
+
+instance groupMatrix ∷ (Nat h, Nat w, Ring a) => Group (Matrix h w a) where 
+  ginverse = negateMatrix
+
+instance matrixVectorField ∷ (Field k, Nat s) => VectorField (Matrix s s) k where
+  scalarMul = scalarMul
 
 
 instance showMatrix :: (Nat h, Nat w, Show a) => Show (Matrix h w a) where
@@ -241,7 +285,7 @@ instance eqMatrix ∷ (Eq a, Nat h, Nat w) => Eq (Matrix h w a) where
 
 instance semiringMatrix :: (Nat s, CommutativeRing a) => Semiring (Matrix s s a) where
   add = addMatrix
-  zero = replicate' zero
+  zero = matrixZero
   mul = mulMatrix
   one = matrixOne
 

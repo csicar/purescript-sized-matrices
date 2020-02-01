@@ -12,7 +12,7 @@
     "url": "https://github.com/csicar/purescript-sized-matrices.git"
   },
   "dependencies": {
-    "purescript-sized-vectors": "^3.1.0",
+    "purescript-sized-vectors": "^5.0.0",
     "purescript-prelude": "^4.0.1",
     "purescript-foldable-traversable": "^4.0.0",
     "purescript-maybe": "^4.0.0",

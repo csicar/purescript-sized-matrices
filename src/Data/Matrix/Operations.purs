@@ -2,9 +2,11 @@ module Data.Matrix.Operations where
 
 import Prelude
 import Data.Matrix
-import Data.Tuple (Tuple(..), snd)
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Foldable (class Foldable, foldMap, foldl, foldr, maximumBy, product)
-import Data.Vec (Vec, range')
+import Data.Function (on)
+import Data.FunctorWithIndex (mapWithIndex)
+import Data.Vec (Vec)
 import Data.Maybe (Maybe, fromJust, fromMaybe)
 import Data.Vec as Vec
 import Data.Typelevel.Num (class Pos, class Nat, class Succ, class Pred, d0, toInt)
@@ -69,12 +71,8 @@ snocRowVec vec (Matrix m) = Matrix $ Vec.snoc vec m
 snocColVec :: ∀h w w' a. Succ w w' => Nat h => Vec.Vec h a → Matrix h w a → Matrix h w' a
 snocColVec vec (Matrix m) = Matrix $ Vec.zipWithE (Vec.snoc) vec m
 
-
 findMaxIndex ∷ ∀s a. Ord a => Pos s => Vec s a → Int
-findMaxIndex vec = fromMaybe 0 $ map snd $ maximumBy (\(Tuple a _) (Tuple b _) → compare a b) withIndex
-  where
-    withIndex ∷ Vec s (Tuple a Int)
-    withIndex = Vec.zipWithE Tuple vec (range' 0)
+findMaxIndex vec = fromMaybe 0 $ map fst $ maximumBy (compare `on` snd) $ mapWithIndex Tuple vec
 
 -- | remove row at index. If index is out of bounds, there will be no change
 -- |

@@ -3,15 +3,22 @@ module Test.Main where
 import Prelude
 
 import Effect
+import Data.FunctorWithIndex (mapWithIndex)
+import Data.Foldable (maximumBy)
+import Data.Function (on)
 import Data.Int (pow)
 import Data.Matrix (Matrix(..), column, fill, height, replicate', row, unsafeIndex, width, zipWithE)
 import Data.Matrix.Reps (matrix11, matrix22, matrix33)
 import Data.Matrix.Transformations (resize, transpose, mkPermutation)
-import Data.Matrix.Operations ((⇥), (⤓))
+import Data.Matrix.Operations ((⇥), (⤓), findMaxIndex)
 import Data.Matrix.Algorithms (det, luDecomp, inverse)
+import Data.Maybe (fromJust)
 import Data.Rational (Rational, fromInt, (%))
+import Data.Tuple (Tuple(Tuple))
+import Data.Tuple as Tuple
 import Data.Typelevel.Num (D3, d0, d1)
-import Data.Vec (vec2)
+import Data.Vec (vec2, (+>))
+import Data.Vec as Vec
 import Test.QuickCheck (Result, (===))
 import Test.Unit (suite, test)
 import Test.Unit.Assert (equal)
@@ -224,3 +231,20 @@ main = runTest do
         sa = resize a
         sa' = matrix22 1.0 4.0 3.0 0.0
       equal sa' sa
+
+    test "findMaxIndex" do
+      quickCheck \(x :: Int) ->
+        (findMaxIndex (x +> Vec.empty)) === 0 
+      quickCheck \(x1 :: Int) x2 x3 ->
+        let
+          actual = findMaxIndex (x1 +> x2 +> x3 +> Vec.empty)
+          expected =
+            unsafePartial
+              ( [x1, x2, x3]
+                  # mapWithIndex Tuple
+                  # maximumBy (compare `on` Tuple.snd)
+                  # fromJust
+                  # Tuple.fst 
+              )
+        in
+          actual === expected 

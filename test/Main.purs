@@ -4,7 +4,7 @@ import Prelude
 
 import Effect
 import Data.FunctorWithIndex (mapWithIndex)
-import Data.Foldable (maximumBy)
+import Data.Foldable (maximumBy, product)
 import Data.Function (on)
 import Data.Int (pow)
 import Data.Matrix (Matrix(..), column, fill, height, replicate', row, unsafeIndex, width, zipWithE)
@@ -13,13 +13,13 @@ import Data.Matrix.Transformations (resize, transpose, mkPermutation)
 import Data.Matrix.Operations ((⇥), (⤓), findMaxIndex)
 import Data.Matrix.Algorithms (det, luDecomp, inverse)
 import Data.Maybe (fromJust)
-import Data.Rational (Rational, fromInt, (%))
+import Data.Rational (Rational, fromInt, (%), toNumber)
 import Data.Tuple (Tuple(Tuple))
 import Data.Tuple as Tuple
-import Data.Typelevel.Num (D3, d0, d1)
+import Data.Typelevel.Num (D3, D2, d0, d1, D5)
 import Data.Vec (vec2, (+>))
 import Data.Vec as Vec
-import Test.QuickCheck (Result, (===))
+import Test.QuickCheck (Result, (===), (<?>))
 import Test.Unit (suite, test)
 import Test.Unit.Assert (equal)
 import Test.Unit.Main (runTest)
@@ -104,27 +104,30 @@ main = runTest do
       -- logShow p
       equal (p*m) (l*u)
       equal exp'l l
-    test "det1" do
-      let
-        m = map fromInt $ matrix33 1 4 (-1) 3 0 5 2 2 1
-      equal (fromInt 12) (det m)
-    test "det2" do
-      let
-        m2 = map fromInt $ matrix33 1 8 (-1) 3 21 5 2 (-6) 1
-      equal (fromInt 167) (det m2)
-    test "inverse" do
-      equal (matrix11 2.0) (inverse $ matrix11 0.5)
-    test "inverse2" do
-      equal
-        (map fromInt $ matrix22 1 2 3 4)
-        (inverse $ matrix22 (-2%1) (1%1) (3%2) (-1%2))
-    test "inverse Identity" do
-      equal
-        ( a4 * inverse a4)
-        one
-      equal
-        (a2 * inverse a2)
-        one
+    suite "determinant" do
+      test "det1" do
+        let
+          m = map fromInt $ matrix33 1 4 (-1) 3 0 5 2 2 1
+        equal (fromInt 12) (det m)
+      test "det2" do
+        let
+          m2 = map fromInt $ matrix33 1 8 (-1) 3 21 5 2 (-6) 1
+        equal (fromInt 167) (det m2)
+      test "determinant is invariant to transpose" do
+        quickCheck $ \(m :: Matrix D5 D5 Int) ->
+          det m === det (transpose m)
+      test "determinant of triangle matrix is product of diagonal" do
+        quickCheck $ \(x11 :: Int) x12 x13 x22 x23 x33 ->
+          let 
+            m = matrix33 
+                x11 x12 x13 
+                0   x22 x23 
+                0   0   x33
+          in
+            det m === product [x11, x22, x33]
+      test "determinant of 1x1 Matrix is its value" do
+        quickCheck $ \(x11:: Int) ->
+          det (matrix11 x11) === x11
     test "consRowVec" do
       let
         b = matrix22 1 2 3 4

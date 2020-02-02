@@ -43,6 +43,8 @@ import Data.Typelevel.Undefined (undefined)
 import Data.Vec (Vec)
 import Data.Vec as Vec
 import Partial.Unsafe (unsafePartial)
+import Test.QuickCheck.Arbitrary (class Arbitrary, arbitrary)
+import Test.QuickCheck.Gen (vectorOf)
 
 -- stored as Vec of rows
 -- | Matrix with height `h`, width `w` and contained value `a`
@@ -291,3 +293,16 @@ instance semiringMatrix :: (Nat s, CommutativeRing a) => Semiring (Matrix s s a)
 
 instance ringMatrix :: (Nat s, CommutativeRing a) => Ring (Matrix s s a) where
   sub a b = add a (negateMatrix b)
+
+
+instance arbitratyMatrix :: (Nat h, Nat w, Arbitrary a) => Arbitrary (Matrix h w a) where
+  arbitrary = do
+    let width = toInt (undefined :: w)
+    let height = toInt (undefined :: h)
+    values :: Array (Array a) <- vectorOf width $ vectorOf height arbitrary
+
+    pure $ fill (\x y -> (values `unsafeArrayIndex` x) `unsafeArrayIndex` y)
+
+    where
+      unsafeArrayIndex :: ∀a. Array a -> Int -> a
+      unsafeArrayIndex array i = unsafePartial $ fromJust $ Array.index array i

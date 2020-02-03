@@ -28,7 +28,7 @@ import Partial.Unsafe (unsafePartial)
 
 a1 :: Matrix D3 D3 Number
 a1 = matrix33
-    1.0 4.0 (0.0 - 1.0)
+    1.0 4.0 (-1.0)
     3.0 0.0 5.0
     2.0 2.0 1.0
 
@@ -41,7 +41,7 @@ a2 = map fromInt $ matrix33
 
 a3 :: Matrix D3 D3 Number
 a3 = matrix33
-    0.0 4.0 (0.0-1.0)
+    0.0 4.0 (-1.0)
     1.0 2.0 1.0
     2.0 1.0 5.0
 
@@ -191,7 +191,7 @@ main = runTest do
     test "negate" do
       let
         m = matrix22 1 2 3 4
-        r = matrix22 (0-1) (0-2) (0-3) (0-4)
+        r = matrix22 (-1) (-2) (-3) (-4)
       equal m $ negate r
 
     test "column" do
@@ -230,7 +230,7 @@ main = runTest do
       equal m' $ transpose m
     test "resize" do
       let
-        a = matrix33 1.0 4.0 (0.0 - 1.0) 3.0 0.0 5.0 2.0 2.0 1.0
+        a = matrix33 1.0 4.0 (-1.0) 3.0 0.0 5.0 2.0 2.0 1.0
         sa = resize a
         sa' = matrix22 1.0 4.0 3.0 0.0
       equal sa' sa

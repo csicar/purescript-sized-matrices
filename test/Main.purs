@@ -236,6 +236,7 @@ main = runTest do
       equal sa' sa
 
     test "findMaxIndex" do
+      equal (findMaxIndex (4 +> 2 +> 5 +> 1 +> Vec.empty)) 2
       quickCheck \(x :: Int) ->
         (findMaxIndex (x +> Vec.empty)) === 0 
       quickCheck \(x1 :: Int) x2 x3 ->

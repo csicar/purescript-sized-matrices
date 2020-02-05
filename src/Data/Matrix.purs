@@ -33,6 +33,7 @@ import Data.Group (class Group)
 import Data.Semigroup.Commutative (class Commutative)
 import Data.Foldable (class Foldable, foldMap, foldl, foldr, maximumBy, product)
 import Data.Maybe (Maybe, fromJust, fromMaybe)
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.String (joinWith)
 import Data.Tuple (Tuple(Tuple), snd)
 import Data.Typelevel.Num (class Lt, class LtEq, class Mul, class Pos, class Pred, D3)
@@ -268,7 +269,19 @@ instance matrixVectorField ∷ (Field k, Nat s) => VectorField (Matrix s s) k wh
 
 
 instance showMatrix :: (Nat h, Nat w, Show a) => Show (Matrix h w a) where
-  show (Matrix m) = "\n  " <> (joinWith "\n  " $ Vec.toArray $ map show m)
+  show (Matrix m) = "\n  " <> joinWith "\n  " (Vec.toArray $ mapWithIndex showRow m)
+    where
+      h = height (Matrix m)
+
+      showRow :: Int -> Vec w a -> String
+      showRow i row = map show row # Vec.toArray # joinWith "  " # bracket i
+
+      bracket :: Int -> String -> String
+      bracket i row
+        | h == 1    = "[" <> row <> "]"
+        | i == 0    = "⎡" <> row <> "⎤"
+        | i == h-1  = "⎣" <> row <> "⎦"
+        | otherwise = "⎢" <> row <> "⎥"
 
 instance functorMatrix :: (Nat h, Nat w) => Functor (Matrix h w) where
   map f (Matrix m) = Matrix $ map (map f) m

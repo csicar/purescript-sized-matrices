@@ -8,7 +8,7 @@ import Data.Function (on)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int (pow)
 import Data.Matrix (Matrix(..), column, fill, height, replicate', row, unsafeIndex, width, zipWithE)
-import Data.Matrix.Algorithms (det)
+import Data.Matrix.Algorithms (det, inverse)
 import Data.Matrix.Operations ((⇥), (⤓), findMaxIndex)
 import Data.Matrix.Reps (matrix11, matrix22, matrix33)
 import Data.Matrix.Transformations (resize, transpose, mkPermutation)
@@ -16,7 +16,7 @@ import Data.Maybe (fromJust)
 import Data.Rational (Rational, fromInt, (%), toNumber)
 import Data.Tuple (Tuple(Tuple))
 import Data.Tuple as Tuple
-import Data.Typelevel.Num (D3, D2, D1, d0, d1, D5)
+import Data.Typelevel.Num (D3, D2, D1, d0, d1, D5, D6)
 import Data.Vec (vec2, (+>))
 import Data.Vec as Vec
 import Effect.Class (liftEffect)
@@ -28,6 +28,7 @@ import Test.Unit.Assert (equal)
 import Test.Unit.Main (runTest)
 import Test.Unit.QuickCheck (quickCheck)
 import Data.VectorField ((.*), (*.))
+import Effect.Class.Console (logShow)
 import Type.Proxy (Proxy(..), Proxy2(..))
 
 a1 :: Matrix D3 D3 Number
@@ -70,20 +71,39 @@ main = runTest do
     let
       a = matrix33 1.0 4.0 (-1.0) 3.0 0.0 5.0 2.0 2.0 1.0
       p = matrix33 0 0 0 1 0 0 0 1 0
-
-    test "check with quickcheck laws" $ liftEffect $ do
-      let matrixProxy = Proxy :: Proxy (Matrix D5 D5 Int)
-      let matrixProxy2 = Proxy2 :: Proxy2 (Matrix D5 D5)
-      checkSemigroup matrixProxy
-      checkMonoid matrixProxy
-      checkFunctor matrixProxy2
-      checkFoldable matrixProxy2
-      checkSemiring matrixProxy
-      checkRing matrixProxy
+    -- test "check with quickcheck laws" $ liftEffect $ do
+    --   let matrixProxy = Proxy :: Proxy (Matrix D5 D5 Int)
+    --   let matrixProxy2 = Proxy2 :: Proxy2 (Matrix D5 D5)
+    --   checkSemigroup matrixProxy
+    --   checkMonoid matrixProxy
+    --   checkFunctor matrixProxy2
+    --   checkFoldable matrixProxy2
+    --   checkSemiring matrixProxy
+    --   checkRing matrixProxy
     test "mkPermutation" do
       equal p (mkPermutation (_ + 1))
-    -- test "lrSplit quickCheck" do
-      -- quickCheck identityProp -- needs Arbituary implementation
+    suite "inverse" do
+      test "inverse1" do
+        let 
+          m = map (_ % 1) $ matrix22 1 2 3 4
+          mInv = map (_ % 2) $ matrix22 (-4) 2 3 (-1)
+        equal mInv (inverse m)
+      test "inverse2" do
+        let
+          m = map (_ % 1) $ matrix33 2 (-1) 0 (-1) 2 (-1) 0 (-1) 2
+          mInv = map (_ % 4) $ matrix33 3 2 1 2 4 2 1 2 3
+        equal mInv (inverse m)
+      test "inverse3" do
+        let
+          m = map (_ % 1) $ matrix33 3 2 5 1 1 3 2 4 6
+          mInv = map (_ % (-8)) $ matrix33 (-6) 8 1 0 8 (-4) 2 (-8) 1
+        equal mInv (inverse m)
+      test "A^(-1) * A = I examples" do
+        equal one (a4 * inverse a4)
+        equal one (a2 * inverse a2)
+      test "I^(-1) = I" do
+        equal (one :: Matrix D5 D5 Rational) (inverse one)
+        equal (one :: Matrix D6 D6 Rational) (inverse one)
     suite "determinant" do
       test "det1" do
         let
@@ -92,8 +112,8 @@ main = runTest do
       test "det2" do
         let
           m2 = map fromInt $ matrix33 1 8 (-1) 3 21 5 2 (-6) 1
-        equal (fromInt 167) (det m2)
-      test "determinant is invariant to transpose" do
+        equal (fromInt 167) (det m2)  
+      test "det(A) = det(A^T)" do
         quickCheck $ \(m :: Matrix D5 D5 Int) ->
           det m === det (transpose m)
       test "determinant of triangle matrix is product of diagonal" do

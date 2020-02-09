@@ -15,3 +15,6 @@ derive newtype instance foldableVec ∷ (Nat s) => Foldable (RegularMatrix s)
 derive newtype instance eqMatrix ∷ (Eq a, Nat s) => Eq (RegularMatrix s a)
 derive newtype instance semiringMatrix :: (Nat s, CommutativeRing a) => Semiring (RegularMatrix s a)
 derive newtype instance ringMatrix :: (Nat s, CommutativeRing a) => Ring (RegularMatrix s a)
+
+instance divisionRingMatrix :: (Pos s, Field a) => DivisionRing (RegularMatrix s a) where
+  recip (RegularMatrix a) = RegularMatrix $ inverse a

@@ -54,17 +54,7 @@ Sized-Matrices
   [3,4]
   [5,6]
 > fromVec vec :: Matrix D2 D2 Int
-... will be an error, since dimentions don't match up
-> lrSplit $ matrix33 1.0 4.0 (0.0 - 1.0) 3.0 0.0 5.0 2.0 2.0 1.0
-  { l:
-      [1.0,0.0,0.0]
-      [3.0,1.0,0.0]
-      [2.0,0.5,1.0]
-  , r:
-      [1.0,4.0,-1.0]
-      [0.0,-12.0,8.0]
-      [0.0,0.0,-1.0]
-  }
+... will be an error, since dimensions don't match up
 ```
 
 Features
@@ -73,8 +63,7 @@ Features
 - typesafe size
 - Complete `Semiring` and `Ring` implementation
 - Matrix multiplication
-- transpose
-- matrix addition
+- Transpose
+- Matrix addition
 - Determinant
 - Inverse Matrix
-- LR splitting for solving linear equasion systems

@@ -1,4 +1,4 @@
-module Data.Matrix.Algorithms (det, cofactor, cofactorMatrix) where
+module Data.Matrix.Algorithms (det, inverse, cofactor, cofactorMatrix, adjunct) where
 
 import Data.Matrix
 import Prelude
@@ -22,10 +22,10 @@ import Data.Vec as Vec
 import Partial.Unsafe (unsafePartial)
 
 cofactorMatrix :: ∀s a. Pos s => EuclideanRing a => Matrix s s a -> Matrix s s a 
-cofactorMatrix m = fill (\x y -> cofactor x y m)
+cofactorMatrix m = fill $ \j i -> cofactor i j m
 
 cofactor :: ∀s a. Pos s => EuclideanRing a => CommutativeRing a => Int -> Int -> Matrix s s a -> a 
-cofactor i j m = (signFor i j) * det' (removeCross i j (toArray m)) 
+cofactor i j m = (signFor i j) * det' (removeCross i j (toArray m))
   where 
     signFor i j
       | even (i+j) = one
@@ -36,7 +36,17 @@ cofactor i j m = (signFor i j) * det' (removeCross i j (toArray m))
     deleteAt' :: ∀a. Int -> Array a -> Array a 
     deleteAt' i m' = unsafePartial $ fromJust $ deleteAt i m'
 
--- | calculate determinant for matrix.
+adjunct :: ∀s a. Pos s => Field a => Matrix s s a -> Matrix s s a
+adjunct = cofactorMatrix >>> transpose
+
+-- | Computes the multiplicative inverse of a regular matrix.
+-- | The function uses [Cramer's Rule](https://en.wikipedia.org/wiki/Cramer%27s_rule) for the computation.
+-- Implementation reference:
+-- https://de.wikipedia.org/wiki/Inverse_Matrix#Berechnung#Darstellung_über_die_Adjunkte
+inverse :: ∀s a. Pos s => Field a => Matrix s s a -> Matrix s s a
+inverse m = map (_ * recip (det m)) $ adjunct m
+
+-- | calculate the determinant for matrix.
 det ∷ ∀s a. CommutativeRing a => EuclideanRing a => Pos s => Matrix s s a → a
 det m = det' (toArray m)
 

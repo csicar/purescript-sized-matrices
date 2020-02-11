@@ -6,16 +6,20 @@ cache:
    paths:
       - .bower_cache
 
+before_script:
+   - mkdir -p .bower_cache
+   - mkdir -p ~/.cache/bower
+   - ls .bower_cache
+   - cp -a .bower_cache/. ~/.cache/bower
+   - ls ~/.cache/bower
+
 build:
    stage: build
    script:
-      - mkdir -p .bower_cache
-      - mkdir -p ~/.cache/bower
-      - ls .bower_cache
-      - cp -a .bower_cache/. ~/.cache/bower
-      - ls ~/.cache/bower
-      - bower install
-      - cp -a ~/.cache/bower/. .bower_cache
-      - ls ~/.cache/bower
-      - ls .bower_cache
+      - bower install -q
       - pulp test
+
+after_script:
+   - cp -a ~/.cache/bower/. .bower_cache
+   - ls ~/.cache/bower
+   - ls .bower_cache

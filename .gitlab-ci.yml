@@ -16,7 +16,7 @@ build:
       - mkdir -p ~/.cache/bower
       - cp -a .bower_cache/. ~/.cache/bower
    script:
-      - bower install -q
+      - bower install
       - pulp build
    after_script:  
       - cp -a ~/.cache/bower/. .bower_cache

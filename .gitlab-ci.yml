@@ -11,7 +11,11 @@ build:
    script:
       - mkdir -p .bower_cache
       - mkdir -p ~/.cache/bower
-      - cp -r .bower_cache ~/.cache/bower
+      - ls .bower_cache
+      - cp -a .bower_cache/. ~/.cache/bower
+      - ls ~/.cache/bower
       - bower install
-      - cp -r ~/.cache/bower .bower_cache
+      - cp -a ~/.cache/bower/. .bower_cache
+      - ls ~/.cache/bower
+      - ls .bower_cache
       - pulp test

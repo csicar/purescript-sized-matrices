@@ -1,6 +1,11 @@
 
 image: registry.gitlab.com/csicar/purescript-sized-matrices
 
+cache:
+   key: "$CI_COMMIT_REF_SLUG"
+   paths:
+      - /home/pureuser/.cache/bower
+
 build:
    stage: build
    script:

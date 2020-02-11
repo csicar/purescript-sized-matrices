@@ -1,8 +1,31 @@
 
 image: registry.gitlab.com/csicar/purescript-sized-matrices
 
+cache:
+   key: "$CI_COMMIT_REF_SLUG"
+   paths:
+      - .bower_cache
+
+
 build:
    stage: build
+   # Moves the bower-cache files into .bower_cache, since
+   # gitlab-ci can only cache files in the project directory
+   before_script:
+      - mkdir -p .bower_cache
+      - mkdir -p ~/.cache/bower
+      - cp -a .bower_cache/. ~/.cache/bower
    script:
       - bower install
+      - pulp build
+   after_script:  
+      - cp -a ~/.cache/bower/. .bower_cache
+   artifacts:
+      paths:
+         - output
+         - bower_components
+
+test:
+   stage: test
+   script:
       - pulp test

@@ -13,8 +13,11 @@ import Data.Typelevel.Num (class Pos, class Nat, class Succ, class Pred, d0, toI
 import Data.Typelevel.Undefined (undefined)
 import Partial.Unsafe (unsafePartial)
 
-consRowVec :: ∀h h' w a. Succ h h' => Nat w =>
-  Vec.Vec w a → Matrix h w a → Matrix h' w a
+consRowVec ::
+  ∀ h h' w a.
+  Succ h h' =>
+  Nat w =>
+  Vec.Vec w a -> Matrix h w a -> Matrix h' w a
 consRowVec vec (Matrix m) = Matrix $ Vec.cons vec m
 
 -- |
@@ -27,7 +30,7 @@ consRowVec vec (Matrix m) = Matrix $ Vec.cons vec m
 -- |
 infixr 4 consRowVec as ⤓
 
-consColVec :: ∀h w w' a. Succ w w' => Nat h => Vec.Vec h a → Matrix h w a → Matrix h w' a
+consColVec :: ∀ h w w' a. Succ w w' => Nat h => Vec.Vec h a -> Matrix h w a -> Matrix h w' a
 consColVec vec (Matrix m) = Matrix $ Vec.zipWithE (Vec.cons) vec m
 
 -- |
@@ -46,10 +49,10 @@ infixr 5 consColVec as ⇥
 -- |   [3,4] }
 -- | ```
 -- |
-unconsV ∷ ∀h w h' a. Pred h h' => Pos h => Pos w => Matrix h w a → { head ∷ Vec w a, tail ∷ Matrix h' w a}
-unconsV (Matrix m) = {head: head, tail: Matrix tail}
+unconsV :: ∀ h w h' a. Pred h h' => Pos h => Pos w => Matrix h w a -> { head :: Vec w a, tail :: Matrix h' w a }
+unconsV (Matrix m) = { head: head, tail: Matrix tail }
   where
-    {head, tail} = Vec.uncons m
+  { head, tail } = Vec.uncons m
 
 -- |
 -- | ```purescript
@@ -59,19 +62,22 @@ unconsV (Matrix m) = {head: head, tail: Matrix tail}
 -- |   [4] }
 -- | ```
 -- |
-unconsH ∷ ∀h w w' a. Pred w w' => Pos h => Pos w => Matrix h w a → { head ∷ Vec h a, tail ∷ Matrix h w' a}
-unconsH (Matrix m) = {head: _.head <$> m', tail: Matrix $ _.tail <$> m'}
+unconsH :: ∀ h w w' a. Pred w w' => Pos h => Pos w => Matrix h w a -> { head :: Vec h a, tail :: Matrix h w' a }
+unconsH (Matrix m) = { head: _.head <$> m', tail: Matrix $ _.tail <$> m' }
   where
-    m' = map Vec.uncons m
+  m' = map Vec.uncons m
 
-snocRowVec :: ∀h h' w a. Succ h h' => Nat w =>
-  Vec.Vec w a → Matrix h w a → Matrix h' w a
+snocRowVec ::
+  ∀ h h' w a.
+  Succ h h' =>
+  Nat w =>
+  Vec.Vec w a -> Matrix h w a -> Matrix h' w a
 snocRowVec vec (Matrix m) = Matrix $ Vec.snoc vec m
 
-snocColVec :: ∀h w w' a. Succ w w' => Nat h => Vec.Vec h a → Matrix h w a → Matrix h w' a
+snocColVec :: ∀ h w w' a. Succ w w' => Nat h => Vec.Vec h a -> Matrix h w a -> Matrix h w' a
 snocColVec vec (Matrix m) = Matrix $ Vec.zipWithE (Vec.snoc) vec m
 
-findMaxIndex ∷ ∀s a. Ord a => Pos s => Vec s a → Int
+findMaxIndex :: ∀ s a. Ord a => Pos s => Vec s a -> Int
 findMaxIndex vec = fromMaybe 0 $ map fst $ maximumBy (compare `on` snd) $ mapWithIndex Tuple vec
 
 -- | remove row at index. If index is out of bounds, there will be no change
@@ -85,14 +91,20 @@ findMaxIndex vec = fromMaybe 0 $ map fst $ maximumBy (compare `on` snd) $ mapWit
 -- |  [2]
 -- |  [4]
 -- | ```
-removeRow ∷ ∀w w' h a. Nat h => Nat w' => Nat w => Pred w w' => Int → Matrix h w a → Matrix h w' a
+removeRow :: ∀ w w' h a. Nat h => Nat w' => Nat w => Pred w w' => Int -> Matrix h w a -> Matrix h w' a
 removeRow i m = fill f
   where
-    f x y | x >= i' = unsafePartial $ unsafeIndex m (x+1) y
-    f x y = unsafePartial $ unsafeIndex m x y
-    w = width m
-    i' | i < 0 = 0
-    i' = i
+  f x y
+    | x >= i' = unsafePartial $ unsafeIndex m (x + 1) y
+
+  f x y = unsafePartial $ unsafeIndex m x y
+
+  w = width m
+
+  i'
+    | i < 0 = 0
+
+  i' = i
 
 -- | remove column at index. If index is out of bounds, there will be no change
 -- |
@@ -105,37 +117,50 @@ removeRow i m = fill f
 -- |   [1,2]
 -- | ```
 -- |
-removeColumn ∷ ∀w h h' a
-  .  Nat w
-  => Nat h
-  => Nat h'
-  => Pred h h'
-  => Int → Matrix h w a → Matrix h' w a
+removeColumn ::
+  ∀ w h h' a.
+  Nat w =>
+  Nat h =>
+  Nat h' =>
+  Pred h h' =>
+  Int -> Matrix h w a -> Matrix h' w a
 removeColumn i m = fill f
   where
-    f x y | y >= i' = unsafePartial $ unsafeIndex m x (y+1)
-    f x y = unsafePartial $ unsafeIndex m x y
-    h = height m
-    i' | i < 0 = 0
-    i' = i
+  f x y
+    | y >= i' = unsafePartial $ unsafeIndex m x (y + 1)
 
-removeCross ∷ ∀w w' h h' a
-  .  Nat w
-  => Nat w'
-  => Nat h
-  => Nat h'
-  => Pred w w'
-  => Pred h h'
-  => Int → Int → Matrix h w a → Matrix h' w' a
+  f x y = unsafePartial $ unsafeIndex m x y
+
+  h = height m
+
+  i'
+    | i < 0 = 0
+
+  i' = i
+
+removeCross ::
+  ∀ w w' h h' a.
+  Nat w =>
+  Nat w' =>
+  Nat h =>
+  Nat h' =>
+  Pred w w' =>
+  Pred h h' =>
+  Int -> Int -> Matrix h w a -> Matrix h' w' a
 removeCross x y = removeRow x <<< removeColumn y
 
-replaceWithIdBlock ∷ ∀h w a
-  .  CommutativeRing a
-  => Nat w
-  => Nat h
-  => Int → Int → Matrix h w a → Matrix h w a
+replaceWithIdBlock ::
+  ∀ h w a.
+  CommutativeRing a =>
+  Nat w =>
+  Nat h =>
+  Int -> Int -> Matrix h w a -> Matrix h w a
 replaceWithIdBlock x y m = fill f
   where
-    f i j | x == j && y == j = one
-    f i j | x == i || y == j = zero
-    f i j = unsafePartial $ unsafeIndex m i j
+  f i j
+    | x == j && y == j = one
+
+  f i j
+    | x == i || y == j = zero
+
+  f i j = unsafePartial $ unsafeIndex m i j

@@ -6,20 +6,27 @@ cache:
    paths:
       - .bower_cache
 
+# Moves the bower-cache files into .bower_cache, since
+# gitlab-ci can only cache files in the project directory
 before_script:
    - mkdir -p .bower_cache
    - mkdir -p ~/.cache/bower
-   - ls .bower_cache
    - cp -a .bower_cache/. ~/.cache/bower
-   - ls ~/.cache/bower
 
 build:
    stage: build
    script:
       - bower install -q
+      - pulp build
+   artifacts:
+      paths:
+         - output
+         - bower_components
+
+test:
+   stage: test
+   script:
       - pulp test
 
 after_script:
    - cp -a ~/.cache/bower/. .bower_cache
-   - ls ~/.cache/bower
-   - ls .bower_cache

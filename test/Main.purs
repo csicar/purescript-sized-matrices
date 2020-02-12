@@ -6,10 +6,10 @@ import Data.Foldable (maximumBy, product)
 import Data.Function (on)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int (pow)
-import Data.Matrix (Matrix(..), column, fill, height, replicate', row, unsafeIndex, width, zipWithE)
+import Data.Matrix (Matrix(..), column, fill, height, replicate', row, unsafeIndex, width, zipWithE, (\\))
 import Data.Matrix.Algorithms (det, inverse)
-import Data.Matrix.Operations ((⇥), (⤓), findMaxIndex)
-import Data.Matrix.Reps (matrix11, matrix22, matrix33)
+import Data.Matrix.Operations ((⇥), (⤓), findMaxIndex, (&))
+import Data.Matrix.Reps (matrix11, matrix22, matrix33, empty, row3)
 import Data.Matrix.Transformations (resize, transpose, mkPermutation)
 import Data.Maybe (fromJust)
 import Data.Rational (Rational, fromInt, (%), toNumber)
@@ -28,22 +28,31 @@ import Test.Unit.Main (runTest)
 import Test.Unit.QuickCheck (quickCheck)
 import Data.VectorField ((.*), (*.))
 import Effect.Class.Console (logShow)
-import Type.Proxy (Proxy(..), Proxy2(..))
 
 a1 :: Matrix D3 D3 Number
-a1 = matrix33 1.0 4.0 (-1.0) 3.0 0.0 5.0 2.0 2.0 1.0
+a1 =
+  row3 1.0 4.0 (-1.0)
+    \\ row3 3.0 0.0 5.0
+    \\ row3 2.0 2.0 1.0
 
 a2 :: Matrix D3 D3 Rational
-a2 = map fromInt $ matrix33 1 4 (-1) 3 (-12) 8 2 (-6) 3
+a2 =
+  map fromInt
+    $ row3 1 4 (-1)
+    \\ row3 3 (-12) 8
+    \\ row3 2 (-6) 3
 
 a3 :: Matrix D3 D3 Number
-a3 = matrix33 0.0 4.0 (-1.0) 1.0 2.0 1.0 2.0 1.0 5.0
+a3 =
+  row3 0.0 4.0 (-1.0)
+    \\ row3 1.0 2.0 1.0
+    \\ row3 2.0 1.0 5.0
 
 a4 :: Matrix D3 D3 Rational
-a4 = map fromInt $ matrix33 1 4 5 1 6 11 2 6 7
+a4 = map fromInt $ row3 1 4 5 \\ row3 1 6 11 \\ row3 2 6 7
 
 a5 ∷ Matrix D3 D3 Number
-a5 = matrix33 2.0 0.0 0.0 0.0 3.0 0.0 0.0 0.0 4.0
+a5 = row3 2.0 0.0 0.0 \\ row3 0.0 3.0 0.0 \\ row3 0.0 0.0 4.0
 
 main ::
   Effect

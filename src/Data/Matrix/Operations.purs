@@ -9,8 +9,7 @@ import Data.FunctorWithIndex (mapWithIndex)
 import Data.Vec (Vec)
 import Data.Maybe (Maybe, fromJust, fromMaybe)
 import Data.Vec as Vec
-import Data.Typelevel.Num (class Pos, class Nat, class Succ, class Pred, d0, toInt)
-import Data.Typelevel.Undefined (undefined)
+import Data.Typelevel.Num (class Pos, class Nat, class Succ, class Pred, d0, toInt, D1)
 import Partial.Unsafe (unsafePartial)
 
 consRowVec ::
@@ -41,6 +40,16 @@ consColVec vec (Matrix m) = Matrix $ Vec.zipWithE (Vec.cons) vec m
 -- | ```
 -- |
 infixr 5 consColVec as ⇥
+
+consSingle :: ∀ a s s'. Succ s s' => a -> Matrix D1 s a -> Matrix D1 s' a
+consSingle a = consColVec (Vec.singleton a)
+
+--| ```purescript
+--| > 1 & 2 & 3 & empty
+--|    [1, 2, 3]
+--| ```
+-- |
+infixr 4 consSingle as &
 
 -- |
 -- | ```purescript

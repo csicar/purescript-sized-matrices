@@ -23,6 +23,7 @@ module Data.Matrix
   , matrixOne
   , matrixZero
   , scalarMul
+  , (\\)
   ) where
 
 import Prelude
@@ -195,6 +196,8 @@ rowUnsafe (Matrix m) i = unsafePartial $ Array.unsafeIndex (Vec.toArray m) i
 -- |
 concatV :: ∀ h1 h2 h w a. Add h1 h2 h => Nat w => Matrix h1 w a -> Matrix h2 w a -> Matrix h w a
 concatV (Matrix a) (Matrix b) = Matrix $ Vec.concat a b
+
+infixr 3 concatV as \\
 
 -- |
 -- | ```purescript
